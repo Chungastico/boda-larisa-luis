@@ -280,25 +280,15 @@ export function InvitationExperience({
         <section id="inicio" className="relative isolate min-h-[720px] overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
           <img
             ref={heroImageRef}
-            src="/figma/cover.png"
-            alt="Larissa y Luis"
-            className="absolute inset-0 -z-30 h-[calc(100%+44px)] w-full object-cover grayscale"
+            src="/figma/photos/camisa-celeste-vestido.png"
+            alt="Larissa y Luis frente a la iglesia"
+            className="absolute inset-0 -z-30 h-[calc(100%+44px)] w-full object-cover object-[52%_center] brightness-[0.72] saturate-[0.72]"
           />
-          <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/65 mix-blend-multiply" />
+          <div className="absolute inset-0 -z-20 bg-[#1c2417]/30" />
           <img
             src="/figma/texture.png"
             alt=""
-            className="absolute inset-0 -z-10 h-full w-full object-cover opacity-10 mix-blend-overlay"
-          />
-          <img
-            src="/figma/gradient-hero.svg"
-            alt=""
-            className="pointer-events-none absolute inset-0 h-full w-full opacity-80"
-          />
-          <img
-            src="/figma/gradient-detail.svg"
-            alt=""
-            className="pointer-events-none absolute inset-0 h-full w-full opacity-35"
+            className="absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.06] mix-blend-overlay"
           />
 
           <nav className="absolute inset-x-0 top-0 z-10 flex items-center justify-between border-b border-[#f4eee2]/20 bg-[#2a2a1c]/25 px-5 py-4 text-[10px] uppercase">
@@ -342,6 +332,14 @@ export function InvitationExperience({
         <section className="bg-[#b4bd91] px-6 py-14 text-center text-[#2b3123]">
           <div data-invitation-reveal className="mx-auto max-w-[290px]">
             <p className="font-script text-4xl leading-none">Bienvenidos</p>
+            <figure className="mt-7 overflow-hidden rounded-t-[110px] border-[5px] border-[#d8d0bf] bg-[#d8d0bf]">
+              <img
+                src="/figma/photos/vestido-y-camisa-celeste.png"
+                alt="Larissa y Luis juntos frente a la iglesia"
+                className="aspect-[3/4] w-full object-cover"
+                loading="lazy"
+              />
+            </figure>
             <p className="mt-5 text-sm leading-6">
               Queremos que nos acompanes a celebrar el inicio de esta nueva etapa,
               rodeados de las personas que mas queremos.
