@@ -20,6 +20,21 @@ import type { Invitation, RsvpStatus } from '@/lib/invitations';
 
 const weddingDate = new Date('2026-10-04T16:00:00-06:00');
 
+const galleryPhotos = [
+  { src: '/figma/photos/hand.png', alt: 'Larissa y Luis, detalle de sus manos', frame: 'arch-top' },
+  { src: '/figma/photos/camisa-celeste-vestido.png', alt: 'Larissa y Luis juntos', frame: 'diagonal-top' },
+  { src: '/figma/photos/boda-all-black.png', alt: 'Larissa y Luis vestidos de negro', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/camisa-celeste-vestido-cuerpo-completo.png', alt: 'Larissa y Luis de cuerpo completo', frame: 'arch-bottom' },
+  { src: '/figma/photos/labios-rojos.png', alt: 'Retrato de Larissa y Luis', frame: 'arch-top' },
+  { src: '/figma/photos/puerta-del-diablo.png', alt: 'Larissa y Luis en la Puerta del Diablo', frame: 'diagonal-top' },
+  { src: '/figma/photos/playa-negro.png', alt: 'Larissa y Luis en la playa', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/sentados-en-piedra.png', alt: 'Larissa y Luis sentados en piedra', frame: 'arch-bottom' },
+  { src: '/figma/photos/lago-celeste.png', alt: 'Larissa y Luis junto al lago', frame: 'arch-top' },
+  { src: '/figma/photos/playa-oscuro.png', alt: 'Larissa y Luis en la playa al atardecer', frame: 'diagonal-top' },
+  { src: '/figma/photos/calles-de-piedra.png', alt: 'Larissa y Luis en calles de piedra', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/vestido-y-camisa-celeste.png', alt: 'Larissa y Luis mirandose', frame: 'arch-bottom' },
+] as const;
+
 type WebMcpContext = {
   registerTool: (
     tool: {
@@ -35,12 +50,15 @@ type WebMcpContext = {
 };
 
 function Countdown() {
-  const [remaining, setRemaining] = useState(() => weddingDate.getTime() - Date.now());
+  const [remaining, setRemaining] = useState(0);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
+    const updateRemaining = () => {
       setRemaining(Math.max(0, weddingDate.getTime() - Date.now()));
-    }, 1_000);
+    };
+
+    updateRemaining();
+    const timer = window.setInterval(updateRemaining, 1_000);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -92,7 +110,11 @@ function DetailRow({
   );
 }
 
-export function InvitationExperience({ invitation }: { invitation: Invitation }) {
+export function InvitationExperience({
+  invitation,
+}: {
+  invitation: Invitation;
+}) {
   const pageRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLImageElement>(null);
   const [decision, setDecision] = useState<RsvpStatus | null>(
@@ -283,6 +305,7 @@ export function InvitationExperience({ invitation }: { invitation: Invitation })
             <a href="#inicio">Inicio</a>
             <a href="#detalles">Detalles</a>
             <a href="#rsvp">RSVP</a>
+            <a href="#galeria">Galeria</a>
           </nav>
 
           <div className="flex min-h-[720px] flex-col items-center px-7 pb-12 pt-24 text-center">
@@ -451,6 +474,25 @@ export function InvitationExperience({ invitation }: { invitation: Invitation })
               </Button>
             </div>
           )}
+        </section>
+
+        <section id="galeria" className="bg-[#f4eee2] px-5 py-12 text-[#313624]">
+          <div data-invitation-reveal className="text-center">
+            <p className="font-script text-4xl leading-none text-[#78805e]">Galeria</p>
+            <p className="mt-2 text-xs font-bold uppercase text-[#5c614d]">Nuestros momentos</p>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            {galleryPhotos.map((photo) => (
+              <figure key={photo.src} className={`gallery-frame gallery-frame-${photo.frame} aspect-[3/4] overflow-hidden bg-[#d8d0bf]`}>
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              </figure>
+            ))}
+          </div>
         </section>
 
         <footer className="bg-[#2b301f] px-6 py-9 text-center text-[#e8e0d2]">

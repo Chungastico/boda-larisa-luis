@@ -5,11 +5,11 @@ import {
   ArrowUpDown,
   Clipboard,
   ExternalLink,
-  LogOut,
   Pencil,
   Search,
   Users,
 } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import {
   flexRender,
@@ -262,11 +262,6 @@ export function AdminDashboard({
     window.setTimeout(() => setCopiedId(null), 1_800);
   }
 
-  async function logout() {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    window.location.reload();
-  }
-
   const columns = useMemo<ColumnDef<Invitation>[]>(
     () => [
       {
@@ -382,22 +377,7 @@ export function AdminDashboard({
             <Link href="/admin" className="font-display text-2xl leading-none">Larissa &amp; Luis</Link>
             <div className="flex items-center gap-2">
               {isDemo && <span className="hidden border border-[#d6c68b] bg-[#faf2d7] px-2 py-1 text-xs text-[#775f1d] sm:block">Muestra</span>}
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="rounded-none text-[#5c614d] hover:bg-[#ece6da]"
-                      aria-label="Cerrar sesion"
-                      onClick={() => void logout()}
-                    >
-                      <LogOut size={17} />
-                    </Button>
-                  }
-                />
-                <TooltipContent>Cerrar sesion</TooltipContent>
-              </Tooltip>
+              <UserButton />
             </div>
           </div>
         </header>

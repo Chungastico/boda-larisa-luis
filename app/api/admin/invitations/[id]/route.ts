@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
-import { isAdminSession } from '@/lib/admin-session';
+import { getAuth } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { RSVP_STATUSES, updateInvitationDetails } from '@/lib/invitations';
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  if (!(await isAdminSession())) {
+  if (!getAuth(request).userId) {
     return NextResponse.json({ error: 'No autorizado.' }, { status: 401 });
   }
 
