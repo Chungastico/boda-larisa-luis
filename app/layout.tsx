@@ -1,5 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs';
-import { shadcn } from '@clerk/ui/themes';
 import type { Metadata } from 'next';
 import './globals.css';
 
@@ -29,15 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>
-        <ClerkProvider
-          appearance={{ theme: shadcn }}
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-        >
-          {children}
-        </ClerkProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
