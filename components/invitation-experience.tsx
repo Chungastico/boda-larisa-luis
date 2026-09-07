@@ -1,21 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  CalendarDays,
-  Check,
-  Clock3,
-  Heart,
-  MapPin,
-  MessageCircle,
-  Minus,
-  Plus,
-  Send,
-  Users,
-  X,
-} from 'lucide-react';
+import { Check, Heart, Minus, Plus, X } from 'lucide-react';
 import gsap from 'gsap';
-import { Button } from '@/components/ui/button';
 import type { Invitation, RsvpStatus } from '@/lib/invitations';
 
 const weddingDate = new Date('2026-10-04T16:00:00-06:00');
@@ -33,6 +20,15 @@ const galleryPhotos = [
   { src: '/figma/photos/playa-oscuro.png', alt: 'Larissa y Luis en la playa al atardecer', frame: 'diagonal-top' },
   { src: '/figma/photos/calles-de-piedra.png', alt: 'Larissa y Luis en calles de piedra', frame: 'diagonal-bottom' },
   { src: '/figma/photos/vestido-y-camisa-celeste.png', alt: 'Larissa y Luis mirandose', frame: 'arch-bottom' },
+] as const;
+
+const galleryPages = [
+  [galleryPhotos[0], galleryPhotos[1]],
+  [galleryPhotos[2], galleryPhotos[3]],
+  [galleryPhotos[4], galleryPhotos[5]],
+  [galleryPhotos[6], galleryPhotos[7]],
+  [galleryPhotos[8], galleryPhotos[9]],
+  [galleryPhotos[10], galleryPhotos[11]],
 ] as const;
 
 type WebMcpContext = {
@@ -79,33 +75,22 @@ function Countdown() {
   }, [remaining]);
 
   return (
-    <div className="grid grid-cols-4 gap-px bg-[#c7b79c]" aria-label="Cuenta regresiva">
-      {parts.map((part) => (
-        <div key={part.label} className="bg-[#f4eee2] px-2 py-3 text-center text-[#313624]">
-          <p className="font-display text-2xl leading-none tabular-nums">{String(part.value).padStart(2, '0')}</p>
-          <p className="mt-1 text-[10px] uppercase">{part.label}</p>
+    <div className="grid grid-cols-4 gap-1.5" aria-label="Cuenta regresiva">
+      {parts.map((part, index) => (
+        <div key={part.label} className="relative isolate h-[84px] overflow-hidden text-center text-[#2a2a1c]">
+          <img
+            src={index % 2 === 0
+              ? '/figma/design/countdown-chip-olive.svg'
+              : '/figma/design/countdown-chip-cream.svg'}
+            alt=""
+            className="absolute inset-0 -z-10 h-full w-full"
+          />
+          <p className="pt-4 font-display text-[22px] font-bold leading-none tabular-nums">
+            {String(part.value).padStart(2, '0')}
+          </p>
+          <p className="mt-1 text-[7px] font-bold uppercase tracking-[0.6px]">{part.label}</p>
         </div>
       ))}
-    </div>
-  );
-}
-
-function DetailRow({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[28px_1fr] gap-3 border-t border-[#d8d0bf] py-4 first:border-t-0 first:pt-0">
-      <span className="mt-0.5 text-[#78805e]">{icon}</span>
-      <div>
-        <p className="font-display text-lg leading-none text-[#313624]">{title}</p>
-        <div className="mt-1 text-sm leading-6 text-[#5c614d]">{children}</div>
-      </div>
     </div>
   );
 }
@@ -167,18 +152,19 @@ export function InvitationExperience({
     }, pageRef);
 
     const heroImage = heroImageRef.current;
-    if (!heroImage) return () => context.revert();
+    const scroller = pageRef.current;
+    if (!heroImage || !scroller) return () => context.revert();
 
     const moveHero = gsap.quickTo(heroImage, 'y', {
       duration: 0.55,
       ease: 'power2.out',
     });
-    const onScroll = () => moveHero(Math.min(window.scrollY * 0.1, 36));
+    const onScroll = () => moveHero(Math.min(scroller.scrollTop * 0.045, 26));
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+    scroller.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       context.revert();
-      window.removeEventListener('scroll', onScroll);
+      scroller.removeEventListener('scroll', onScroll);
     };
   }, []);
 
@@ -275,227 +261,185 @@ export function InvitationExperience({
   }
 
   return (
-    <main className="min-h-screen bg-[#2b301f] md:px-6 md:py-8">
-      <div ref={pageRef} className="mx-auto max-w-[440px] overflow-hidden bg-[#f4eee2] shadow-2xl">
-        <section id="inicio" className="relative isolate min-h-[720px] overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
-          <img
-            ref={heroImageRef}
-            src="/figma/photos/camisa-celeste-vestido.png"
-            alt="Larissa y Luis frente a la iglesia"
-            className="absolute inset-0 -z-30 h-[calc(100%+44px)] w-full object-cover object-[52%_center] brightness-[0.72] saturate-[0.72]"
-          />
-          <div className="absolute inset-0 -z-20 bg-[#1c2417]/30" />
-          <img
-            src="/figma/texture.png"
-            alt=""
-            className="absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.06] mix-blend-overlay"
-          />
-
-          <nav className="absolute inset-x-0 top-0 z-10 flex items-center justify-between border-b border-[#f4eee2]/20 bg-[#2a2a1c]/25 px-5 py-4 text-[10px] uppercase">
-            <a href="#inicio">Inicio</a>
-            <a href="#detalles">Detalles</a>
-            <a href="#rsvp">RSVP</a>
-            <a href="#galeria">Galeria</a>
+    <main className="h-[100svh] overflow-hidden bg-[#24291e] md:p-5">
+      <div
+        ref={pageRef}
+        className="invitation-scroller mx-auto h-full max-w-[480px] overflow-y-auto bg-[#f4eee2] shadow-2xl"
+      >
+        <section id="inicio" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
+          <nav className="relative z-20 grid h-[58px] grid-cols-[34px_repeat(5,minmax(0,1fr))] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
+            <a href="#inicio" aria-label="Inicio" className="grid place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
+            <a href="#bienvenida" className="whitespace-nowrap hover:opacity-60">Bienvenida</a>
+            <a href="#vestimenta" className="whitespace-nowrap hover:opacity-60">Vestimenta</a>
+            <a href="#ubicacion" className="whitespace-nowrap hover:opacity-60">Ubicacion</a>
+            <a href="#rsvp" className="whitespace-nowrap hover:opacity-60">RSVP</a>
+            <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galeria</a>
           </nav>
 
-          <div className="flex min-h-[720px] flex-col items-center px-7 pb-12 pt-24 text-center">
-            <p data-invitation-reveal className="text-sm">4 / 10 / 2026</p>
+          <div className="relative flex min-h-[calc(100svh-58px)] flex-col items-center overflow-hidden px-7 pb-14 pt-14 text-center">
             <img
-              data-invitation-reveal
-              src="/figma/monogram.svg"
-              alt="Monograma de Larissa y Luis"
-              className="mt-6 h-16 w-16 object-contain"
+              ref={heroImageRef}
+              src="/figma/photos/camisa-celeste-vestido.png"
+              alt="Larissa y Luis frente a la iglesia"
+              className="absolute inset-0 -z-30 h-[calc(100%+34px)] w-full object-cover object-[52%_center] saturate-[0.72]"
             />
-            <div className="mt-auto pb-2">
-              <h1 data-invitation-reveal className="font-script text-6xl leading-none text-[#f4eee2] drop-shadow-lg">
-                Larissa
-              </h1>
-              <p data-invitation-reveal className="font-script my-1 text-4xl leading-none text-[#c7b79c]">
-                &amp;
-              </p>
-              <h2 data-invitation-reveal className="font-script text-6xl leading-none text-[#f4eee2] drop-shadow-lg">
-                Luis
-              </h2>
-              <p data-invitation-reveal className="mt-9 text-sm font-bold uppercase text-[#d9c9ad]">
-                Nos casamos
-              </p>
+            <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/55 mix-blend-multiply" />
+            <img src="/figma/gradient-hero.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-90" />
+            <img src="/figma/gradient-detail.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-50" />
+            <img src="/figma/texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.08] mix-blend-overlay" />
+
+            <p data-invitation-reveal className="text-[13px] font-bold tracking-[4px] text-[#f4eee2]">4 · 10 · 2026</p>
+            <img data-invitation-reveal src="/figma/monogram.svg" alt="Monograma de Larissa y Luis" className="mt-5 h-[73px] w-[73px] object-contain brightness-0 invert" />
+            <div className="mt-auto">
+              <h1 data-invitation-reveal className="font-script text-[64px] leading-[0.78] text-[#f4eee2] drop-shadow-md">Larissa</h1>
+              <p data-invitation-reveal className="font-script my-2 text-[38px] leading-none text-[#c7b79c]">&amp;</p>
+              <h2 data-invitation-reveal className="font-script text-[64px] leading-[0.78] text-[#f4eee2] drop-shadow-md">Luis</h2>
+              <p data-invitation-reveal className="mt-11 text-[15px] font-bold uppercase tracking-[2.8px] text-[#c7b79c]">Nos casamos</p>
             </div>
           </div>
         </section>
 
-        <section className="paper-texture px-6 py-12 text-center text-[#313624]">
-          <p data-invitation-reveal className="font-script text-3xl leading-none text-[#78805e]">Cuenta regresiva</p>
-          <p data-invitation-reveal className="mt-2 text-xs uppercase text-[#6e735f]">Falta poco para celebrar juntos</p>
-          <div data-invitation-reveal className="mt-6"><Countdown /></div>
+        <section className="story-screen relative isolate flex flex-col justify-center overflow-hidden bg-[#2a2a1c] px-6 text-center text-[#f4eee2]">
+          <img src="/figma/photos/hand.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover object-center opacity-35 saturate-[0.5]" />
+          <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/65 mix-blend-multiply" />
+          <img src="/figma/design/countdown-gradient-a.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-70" />
+          <img src="/figma/design/countdown-gradient-b.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-70" />
+          <div>
+            <p data-invitation-reveal className="font-script text-[38px] leading-none text-[#c7b79c]">Cuenta regresiva</p>
+            <p data-invitation-reveal className="mt-3 text-[17px] font-bold uppercase tracking-[0.3px]">Falta poco para celebrar juntos</p>
+          </div>
+          <div data-invitation-reveal className="mt-16"><Countdown /></div>
         </section>
 
-        <section className="bg-[#b4bd91] px-6 py-14 text-center text-[#2b3123]">
-          <div data-invitation-reveal className="mx-auto max-w-[290px]">
-            <p className="font-script text-4xl leading-none">Bienvenidos</p>
-            <figure className="mt-7 overflow-hidden rounded-t-[110px] border-[5px] border-[#d8d0bf] bg-[#d8d0bf]">
-              <img
-                src="/figma/photos/vestido-y-camisa-celeste.png"
-                alt="Larissa y Luis juntos frente a la iglesia"
-                className="aspect-[3/4] w-full object-cover"
-                loading="lazy"
-              />
+        <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
+          <div data-invitation-reveal className="w-full max-w-[374px]">
+            <figure className="mx-auto max-w-[300px] overflow-hidden rounded-t-[94px] border-[5px] border-[#f4eee2] bg-[#f4eee2]">
+              <img src="/figma/photos/vestido-y-camisa-celeste.png" alt="Larissa y Luis juntos" className="aspect-[3/4] w-full object-cover" loading="lazy" />
             </figure>
-            <p className="mt-5 text-sm leading-6">
-              Queremos que nos acompanes a celebrar el inicio de esta nueva etapa,
-              rodeados de las personas que mas queremos.
+            <p className="font-script mt-5 text-[38px] leading-none">¡Bienvenidos!</p>
+            <p className="mx-auto mt-5 max-w-[335px] text-[13px] leading-[1.75]">
+              Queremos que nos acompanes a celebrar el inicio de esta nueva etapa, rodeados de las personas que mas queremos. El amor se multiplica cuando se comparte.
             </p>
-            <p className="mt-6 text-xs font-bold uppercase">Te esperamos</p>
+            <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.5px]">¡Te esperamos!</p>
           </div>
         </section>
 
-        <section id="detalles" className="bg-[#fffaf0] px-6 py-12 text-[#313624]">
-          <div data-invitation-reveal className="mb-8 text-center">
-            <p className="font-script text-4xl leading-none text-[#78805e]">El gran dia</p>
-            <p className="mt-2 text-xs uppercase text-[#6e735f]">Domingo, 4 de octubre de 2026</p>
-          </div>
-          <div data-invitation-reveal className="border-y border-[#d8d0bf] py-5">
-            <DetailRow icon={<CalendarDays size={20} />} title="Ceremonia civil">
-              <p>7:00 - 10:00 AM</p>
-            </DetailRow>
-            <DetailRow icon={<MapPin size={20} />} title="Ubicacion">
-              <p>Los detalles de llegada se compartiran por este mismo enlace.</p>
-            </DetailRow>
-            <DetailRow icon={<Clock3 size={20} />} title="Recepcion">
-              <p>Despues de la ceremonia, celebremos juntos.</p>
-            </DetailRow>
+        <section className="story-screen paper-texture relative isolate flex flex-col items-center justify-center overflow-hidden px-7 text-center text-[#2a2a1c]">
+          <img src="/figma/design/ceremony-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.14] mix-blend-multiply" />
+          <div data-invitation-reveal className="max-w-[355px]">
+            <p className="font-script text-[38px] leading-none text-[#8b9574]">Ceremonia civil</p>
+            <p className="mt-4 text-[21px] font-bold">7:00 - 10:00 AM</p>
+            <div className="mx-auto mt-7 h-px w-20 bg-[#c7b79c]" />
+            <p className="mt-7 text-[13px] leading-[1.75]">
+              La ceremonia civil se realizara en un ambiente intimo, seguida de un desayuno para celebrar los primeros minutos como esposos. Un momento sencillo, cercano y lleno de carino.
+            </p>
           </div>
         </section>
 
-        <section className="bg-[#424934] px-6 py-14 text-center text-[#f4eee2]">
-          <Heart data-invitation-reveal className="mx-auto text-[#c7b79c]" size={24} strokeWidth={1.5} />
-          <p data-invitation-reveal className="font-script mt-4 text-4xl leading-none">Tu lugar esta reservado</p>
-          <p data-invitation-reveal className="mt-4 text-sm leading-6 text-[#e8e0d2]">
-            <span className="font-semibold">{invitation.recipientName}</span>, esta invitacion contempla hasta{' '}
-            <span className="font-semibold">{invitation.maxGuests}</span>{' '}
-            {invitation.maxGuests === 1 ? 'persona.' : 'personas.'}
-          </p>
+        <section id="vestimenta" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-center text-[#2a2a1c]">
+          <img src="/figma/photos/boda-all-black.png" alt="Larissa y Luis" className="absolute inset-x-0 top-0 -z-30 h-[65%] w-full object-cover object-center" loading="lazy" />
+          <div className="absolute inset-x-0 top-0 -z-20 h-[65%] bg-[#2a2a1c]/55 mix-blend-multiply" />
+          <img src="/figma/design/dress-card.svg" alt="" className="absolute inset-x-0 bottom-0 -z-10 h-[48%] w-full" />
+          <div data-invitation-reveal className="absolute inset-x-7 bottom-[7%]">
+            <p className="font-script text-[38px] leading-none text-[#8b9574]">Vestimenta</p>
+            <p className="mt-4 text-[20px] font-bold">Formal elegante</p>
+            <p className="mx-auto mt-5 max-w-[325px] text-[13px] leading-[1.75]">Agradecemos que nos acompanes con tonos neutros, oscuros o suaves para celebrar juntos esta ocasion tan especial.</p>
+          </div>
         </section>
 
-        <section id="rsvp" className="paper-texture px-6 py-12 text-[#313624]">
-          <div data-invitation-reveal className="text-center">
-            <p className="font-script text-4xl leading-none text-[#78805e]">Confirmacion</p>
-            <p className="mt-3 text-sm leading-6 text-[#5c614d]">Tu respuesta nos ayuda a preparar cada detalle.</p>
+        <section id="ubicacion" className="story-screen relative isolate flex flex-col overflow-hidden bg-[#2a2a1c] text-center">
+          <div className="relative h-[49%] shrink-0 overflow-hidden rounded-b-[46px]">
+            <img src="/figma/photos/puerta-del-diablo.png" alt="Vista de la celebracion" className="h-full w-full object-cover" loading="lazy" />
+            <div className="absolute inset-0 bg-[#2a2a1c]/50 mix-blend-multiply" />
+          </div>
+          <div data-invitation-reveal className="flex flex-1 flex-col items-center justify-center px-7 text-[#f4eee2]">
+            <p className="font-script text-[38px] leading-none text-[#c7b79c]">Ubicacion</p>
+            <p className="mt-4 text-[23px] font-bold">Restaurante El Mirador</p>
+            <p className="mt-2 text-[11px] tracking-[0.7px] text-[#c7b79c]">SAN SALVADOR, EL SALVADOR</p>
+            <p className="mt-6 max-w-[340px] text-[13px] leading-[1.7] text-[#f4eee2]/80">Un espacio para encontrarnos, brindar y celebrar cada momento de este dia.</p>
+            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante+El+Mirador+San+Salvador" target="_blank" rel="noreferrer" className="relative mt-7 grid h-[54px] w-[184px] place-items-center text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c]">
+              <img src="/figma/design/map-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+              <span className="relative">Ver mapa</span>
+            </a>
+          </div>
+        </section>
+
+        <section id="rsvp" className="story-screen relative isolate flex flex-col justify-center overflow-hidden bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
+          <img src="/figma/photos/sentados-en-piedra.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover opacity-35 saturate-[0.55]" loading="lazy" />
+          <div className="absolute inset-0 -z-20 bg-[#8b9574]/65 mix-blend-multiply" />
+          <div data-invitation-reveal>
+            <p className="font-script text-[38px] leading-none">RSVP</p>
+            <p className="mt-3 text-[19px] font-bold">¿Nos acompanaras?</p>
+            <p className="mx-auto mt-4 max-w-[335px] text-[12px] leading-[1.65]">Agradecemos confirmar tu asistencia antes del 15 de septiembre de 2026.</p>
           </div>
 
           {savedStatus ? (
-            <div data-invitation-reveal className="mt-8 border border-[#aeb787] bg-[#fffaf0] p-6 text-center">
-              {savedStatus === 'ACCEPTED' ? (
-                <Check className="mx-auto text-[#78805e]" size={30} />
-              ) : (
-                <Heart className="mx-auto text-[#b48272]" size={30} />
-              )}
-              <p className="font-display mt-3 text-2xl">
-                {savedStatus === 'ACCEPTED' ? 'Gracias, te esperamos.' : 'Gracias por avisarnos.'}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-[#5c614d]">
-                Tu respuesta fue registrada para {invitation.recipientName}.
-              </p>
+            <div data-invitation-reveal className="mx-auto mt-8 max-w-[348px] border border-[#2a2a1c]/25 bg-[#f4eee2]/90 px-6 py-7">
+              {savedStatus === 'ACCEPTED' ? <Check className="mx-auto" size={28} /> : <Heart className="mx-auto" size={28} />}
+              <p className="font-script mt-4 text-[31px] leading-none">{savedStatus === 'ACCEPTED' ? '¡Te esperamos!' : 'Gracias por avisarnos'}</p>
+              <p className="mt-4 text-[12px] leading-5">Tu respuesta fue registrada para {invitation.recipientName}.</p>
             </div>
           ) : (
-            <div data-invitation-reveal className="mt-8 space-y-5">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setDecision('ACCEPTED')}
-                  className={decision === 'ACCEPTED' ? 'h-11 bg-[#424934]' : 'h-11 bg-[#e8e1d3] text-[#313624] hover:bg-[#d9dfc2]'}
-                >
-                  <Check size={16} /> Si asistire
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setDecision('DECLINED')}
-                  className={decision === 'DECLINED' ? 'h-11 bg-[#a86558]' : 'h-11 bg-[#e8e1d3] text-[#313624] hover:bg-[#efd4cc]'}
-                >
-                  <X size={16} /> No podre asistir
-                </Button>
+            <div data-invitation-reveal className="mx-auto mt-7 w-full max-w-[348px]">
+              <p className="text-[13px] font-bold">Hemos reservado:</p>
+              <p className="mt-1 text-[24px] font-bold leading-tight">{invitation.recipientName}</p>
+              <p className="mt-1 text-[12px]">{invitation.maxGuests} {invitation.maxGuests === 1 ? 'espacio' : 'espacios'} para adultos</p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button type="button" onClick={() => setDecision('ACCEPTED')} className="relative h-[46px] overflow-hidden text-[12px] font-bold uppercase tracking-[0.45px] text-[#f4eee2]">
+                  <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                  <span className="relative">Si, asistire</span>
+                </button>
+                <button type="button" onClick={() => setDecision('DECLINED')} className={`h-[46px] border border-[#2a2a1c] text-[12px] font-bold uppercase tracking-[0.45px] transition-colors ${decision === 'DECLINED' ? 'bg-[#2a2a1c] text-[#f4eee2]' : 'bg-[#f4eee2]/45 text-[#2a2a1c]'}`}>
+                  No podre asistir
+                </button>
               </div>
 
               {decision === 'ACCEPTED' && (
-                <div className="border-y border-[#d8d0bf] py-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users size={18} className="text-[#78805e]" />
-                      <span>Personas que asistiran</span>
-                    </div>
-                    <div className="flex h-9 items-center border border-[#bfc5a4] bg-[#fffaf0]">
-                      <button
-                        type="button"
-                        aria-label="Reducir cantidad de asistentes"
-                        title="Reducir cantidad"
-                        onClick={() => setGuestCount((count) => Math.max(1, count - 1))}
-                        className="grid h-full w-9 place-items-center border-r border-[#bfc5a4] text-[#424934] hover:bg-[#ece6da]"
-                      >
-                        <Minus size={16} />
-                      </button>
-                      <span className="grid h-full w-10 place-items-center text-sm tabular-nums">{guestCount}</span>
-                      <button
-                        type="button"
-                        aria-label="Aumentar cantidad de asistentes"
-                        title="Aumentar cantidad"
-                        onClick={() => setGuestCount((count) => Math.min(invitation.maxGuests, count + 1))}
-                        className="grid h-full w-9 place-items-center border-l border-[#bfc5a4] text-[#424934] hover:bg-[#ece6da]"
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </div>
+                <div className="mt-4 flex items-center justify-center gap-4 text-[12px]">
+                  <span>Personas que asistiran</span>
+                  <div className="flex h-8 items-center border border-[#2a2a1c] bg-[#f4eee2]/75">
+                    <button type="button" aria-label="Reducir cantidad de asistentes" title="Reducir cantidad" onClick={() => setGuestCount((count) => Math.max(1, count - 1))} className="grid h-full w-8 place-items-center border-r border-[#2a2a1c]/25"><Minus size={14} /></button>
+                    <span className="grid h-full w-8 place-items-center tabular-nums">{guestCount}</span>
+                    <button type="button" aria-label="Aumentar cantidad de asistentes" title="Aumentar cantidad" onClick={() => setGuestCount((count) => Math.min(invitation.maxGuests, count + 1))} className="grid h-full w-8 place-items-center border-l border-[#2a2a1c]/25"><Plus size={14} /></button>
                   </div>
                 </div>
               )}
 
-              <label className="block">
-                <span className="mb-2 flex items-center gap-2 text-sm text-[#5c614d]">
-                  <MessageCircle size={17} className="text-[#78805e]" /> Mensaje o restriccion alimentaria
-                </span>
-                <textarea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  maxLength={500}
-                  rows={4}
-                  className="w-full resize-none border border-[#c9c0af] bg-[#fffaf0] px-3 py-2 text-sm leading-6 outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20"
-                />
-              </label>
-
-              {error && <p className="text-center text-sm text-[#a54e43]">{error}</p>}
-
-              <Button
-                type="button"
-                onClick={submitRsvp}
-                disabled={isSubmitting}
-                className="h-12 w-full bg-[#424934] text-base hover:bg-[#313624]"
-              >
-                <Send size={17} /> {isSubmitting ? 'Guardando...' : 'Enviar confirmacion'}
-              </Button>
+              <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} aria-label="Mensaje o restriccion alimentaria" placeholder="Mensaje o restriccion alimentaria (opcional)" className="mt-4 w-full resize-none border border-[#2a2a1c]/30 bg-[#f4eee2]/75 px-3 py-2 text-[12px] leading-5 outline-none placeholder:text-[#2a2a1c]/60 focus:border-[#2a2a1c]" />
+              {error && <p className="mt-3 text-[12px] font-bold text-[#7d3028]">{error}</p>}
+              <button type="button" onClick={submitRsvp} disabled={isSubmitting} className="relative mt-4 h-[60px] w-full overflow-hidden text-[13px] font-bold uppercase tracking-[0.65px] text-[#f4eee2] disabled:opacity-60">
+                <img src="/figma/design/rsvp-confirm-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                <span className="relative">{isSubmitting ? 'Guardando...' : 'Confirmar asistencia'}</span>
+              </button>
             </div>
           )}
         </section>
 
-        <section id="galeria" className="bg-[#f4eee2] px-5 py-12 text-[#313624]">
-          <div data-invitation-reveal className="text-center">
-            <p className="font-script text-4xl leading-none text-[#78805e]">Galeria</p>
-            <p className="mt-2 text-xs font-bold uppercase text-[#5c614d]">Nuestros momentos</p>
-          </div>
-          <div className="mt-8 grid grid-cols-2 gap-3">
-            {galleryPhotos.map((photo) => (
-              <figure key={photo.src} className={`gallery-frame gallery-frame-${photo.frame} aspect-[3/4] overflow-hidden bg-[#d8d0bf]`}>
-                <img
-                  src={photo.src}
-                  alt={photo.alt}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              </figure>
-            ))}
-          </div>
-        </section>
+        {galleryPages.map((photos, pageIndex) => (
+          <section key={photos[0].src} id={pageIndex === 0 ? 'galeria' : undefined} className="story-screen paper-texture relative isolate flex flex-col overflow-hidden px-5 py-10 text-[#2a2a1c]">
+            <img src="/figma/design/gallery-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-25 mix-blend-multiply" />
+            <header data-invitation-reveal className="shrink-0 text-center">
+              <p className="font-script text-[38px] leading-none text-[#8b9574]">Galeria</p>
+              <p className="mt-2 text-[13px] font-bold uppercase tracking-[0.5px]">Nuestros momentos</p>
+            </header>
+            <div className="mt-7 grid min-h-0 flex-1 grid-cols-2 gap-3">
+              {photos.map((photo) => (
+                <figure key={photo.src} className={`gallery-frame-${photo.frame} h-full overflow-hidden bg-[#c7b79c] shadow-sm`}>
+                  <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
+                </figure>
+              ))}
+            </div>
+            <p className="mt-5 text-center text-[10px] font-bold tracking-[1px] text-[#8b9574]">{String(pageIndex + 1).padStart(2, '0')} / {String(galleryPages.length).padStart(2, '0')}</p>
+          </section>
+        ))}
 
-        <footer className="bg-[#2b301f] px-6 py-9 text-center text-[#e8e0d2]">
-          <p className="font-script text-3xl leading-none">Larissa &amp; Luis</p>
-          <p className="mt-3 text-xs">4 de octubre de 2026</p>
+        <footer className="story-screen relative isolate flex flex-col items-center justify-center overflow-hidden bg-[#2a2a1c] px-7 text-center text-[#f4eee2]">
+          <img src="/figma/photos/playa-oscuro.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover opacity-30 saturate-[0.45]" loading="lazy" />
+          <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/75 mix-blend-multiply" />
+          <img data-invitation-reveal src="/figma/monogram.svg" alt="Monograma de Larissa y Luis" className="h-20 w-20 brightness-0 invert" />
+          <p data-invitation-reveal className="mt-8 text-[16px] font-bold uppercase tracking-[3px]">Larissa y Luis</p>
+          <p data-invitation-reveal className="mt-4 text-[12px] tracking-[2px] text-[#c7b79c]">4 · 10 · 2026</p>
         </footer>
       </div>
     </main>

@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="480" height="325" viewBox="0 0 480 325" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Vestimenta &#226;&#128;&#148; tarjeta diagonal" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M0 49.8333L480 0V325H0V49.8333Z" fill="#F4EEE2"/>
+<rect id="Rectangle 1" x="-7" y="51" width="500" height="50" fill="url(#paint0_linear_0_4)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="243.476" y1="51" x2="242.598" y2="101.001" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F4EEE2"/>
+<stop offset="1" stop-color="#F4EEE3"/>
+</linearGradient>
+<clipPath id="clip0_0_4">
+<rect width="480" height="325" fill="white"/>
+</clipPath>
+</defs>
+</svg>

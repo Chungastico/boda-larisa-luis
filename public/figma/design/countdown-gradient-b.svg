@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="490" height="780" viewBox="0 0 490 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Gradiente" clip-path="url(#clip0_0_6)">
+<path id="Vector" d="M490 0H0V780H490V0Z" fill="url(#paint0_linear_0_6)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_6" x1="0" y1="0" x2="0" y2="780" gradientUnits="userSpaceOnUse">
+<stop stop-color="#2A2A1C" stop-opacity="0.15"/>
+<stop offset="0.4" stop-color="#2A2A1C" stop-opacity="0.15"/>
+<stop offset="1" stop-color="#2A2A1C"/>
+</linearGradient>
+<clipPath id="clip0_0_6">
+<rect width="490" height="780" fill="white"/>
+</clipPath>
+</defs>
+</svg>
