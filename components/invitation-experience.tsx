@@ -301,7 +301,7 @@ export function InvitationExperience({
             data-invitation-reveal
             src="/figma/type/countdown-title.svg"
             alt=""
-            className="absolute left-[40.2083%] top-[435px] h-auto w-[281px] max-w-[72%] -translate-x-1/2"
+            className="absolute left-[40.2083%] top-[435px] h-auto w-[281px] max-w-[72%] -translate-x-1/2 scale-x-[0.82]"
           />
           <p data-invitation-reveal className="absolute left-[61.6667%] top-[535px] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-normal">
             Falta poco
