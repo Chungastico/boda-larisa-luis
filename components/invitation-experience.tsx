@@ -452,7 +452,7 @@ export function InvitationExperience({
           <div className="relative h-[53%] shrink-0 overflow-hidden rounded-b-[46px]">
             <img src="/figma/design/location-photo.png" alt="Larissa y Luis sentados juntos" className="h-full w-full object-cover object-center" loading="lazy" />
           </div>
-          <img src="/figma/design/location-texture.png" alt="" className="absolute inset-x-0 bottom-0 z-0 h-[49%] w-full object-cover opacity-25 mix-blend-screen" />
+          <img src="/figma/design/location-background.png" alt="" className="absolute inset-0 z-0 h-full w-full object-cover" />
           <div data-invitation-reveal className="relative z-10 flex flex-1 flex-col items-center justify-center px-7 text-[#f4eee2]">
             <p className="font-script text-[30px] leading-none text-[#c7b79c]">Ubicación</p>
             <p className="mt-4 text-[20px] font-bold uppercase tracking-[0.2px]">Restaurante Hacienda Real</p>
