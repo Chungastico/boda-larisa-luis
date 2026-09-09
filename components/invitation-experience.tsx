@@ -384,7 +384,7 @@ export function InvitationExperience({
             />
             <div className="absolute inset-0 -z-20 bg-[#1d2118]/[0.12]" />
 
-            <p data-invitation-reveal className="absolute left-1/2 top-[40px] w-full -translate-x-1/2 text-[20px] font-bold tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
+            <p data-invitation-reveal className="absolute left-1/2 top-[40px] w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
             <h1 className="sr-only">Larissa y Luis</h1>
             <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="absolute left-[38.125%] top-[421px] h-auto w-[51.4583%] -translate-x-1/2" />
             <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="absolute left-1/2 top-[514px] h-auto w-[11.4583%] -translate-x-1/2" />
