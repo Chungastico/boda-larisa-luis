@@ -312,7 +312,7 @@ export function InvitationExperience({
         <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
           <div data-invitation-reveal className="w-full max-w-[374px]">
             <img src="/figma/design/welcome-photo.png" alt="Larissa y Luis juntos" className="mx-auto block h-auto w-full max-w-[374px] object-contain" loading="lazy" />
-            <p className="font-script mt-5 text-[42px] leading-none tracking-normal">¡Bienvenidos!</p>
+            <p className="font-script mt-5 text-[30px] leading-none tracking-normal">¡Bienvenidos!</p>
             <p className="mx-auto mt-5 max-w-[335px] text-[13px] leading-[1.7]">
               Queremos que nos acompañes a celebrar el inicio de esta nueva etapa, rodeados de las personas que más queremos. El amor se multiplica cuando se comparte.
             </p>
@@ -323,7 +323,7 @@ export function InvitationExperience({
         <section className="story-screen paper-texture relative isolate flex flex-col items-center justify-center overflow-hidden px-7 text-center text-[#2a2a1c]">
           <img src="/figma/design/ceremony-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.14] mix-blend-multiply" />
           <div data-invitation-reveal className="max-w-[355px]">
-            <p className="font-script text-[38px] leading-none text-[#8b9574]">Ceremonia civil</p>
+            <p className="font-script text-[30px] leading-none text-[#8b9574]">Ceremonia civil</p>
             <p className="mt-4 text-[21px] font-bold">7:00 - 10:00 AM</p>
             <div className="mx-auto mt-7 h-px w-20 bg-[#c7b79c]" />
             <p className="mt-7 text-[13px] leading-[1.75]">
@@ -336,7 +336,7 @@ export function InvitationExperience({
           <img src="/figma/design/dress-photo.png" alt="Larissa y Luis vestidos de negro" className="absolute inset-x-0 top-0 z-0 h-[65%] w-full object-cover object-center" loading="lazy" />
           <img src="/figma/design/dress-card.svg" alt="" className="absolute inset-x-0 bottom-0 z-10 h-[52%] w-full" />
           <div data-invitation-reveal className="absolute inset-x-7 bottom-[5%] z-20 flex flex-col items-center">
-            <p className="font-script text-[38px] leading-none text-[#8b9574]">Código de vestimenta</p>
+            <p className="font-script text-[30px] leading-none text-[#8b9574]">Código de vestimenta</p>
             <p className="mt-4 text-[18px] font-bold uppercase tracking-[0.7px]">Etiqueta semi-formal</p>
             <p className="mx-auto mt-6 max-w-[340px] text-[13px] leading-[1.7] text-[#4c4f43]">
               <span className="block">Pedimos a nuestros invitados vestir de etiqueta semi-formal.</span>
@@ -350,16 +350,16 @@ export function InvitationExperience({
         </section>
 
         <section id="ubicacion" className="story-screen relative isolate flex flex-col overflow-hidden bg-[#2a2a1c] text-center">
-          <div className="relative h-[49%] shrink-0 overflow-hidden rounded-b-[46px]">
-            <img src="/figma/photos/puerta-del-diablo.png" alt="Vista de la celebracion" className="h-full w-full object-cover" loading="lazy" />
-            <div className="absolute inset-0 bg-[#2a2a1c]/50 mix-blend-multiply" />
+          <div className="relative h-[53%] shrink-0 overflow-hidden rounded-b-[46px]">
+            <img src="/figma/design/location-photo.png" alt="Larissa y Luis sentados juntos" className="h-full w-full object-cover object-center" loading="lazy" />
           </div>
-          <div data-invitation-reveal className="flex flex-1 flex-col items-center justify-center px-7 text-[#f4eee2]">
-            <p className="font-script text-[38px] leading-none text-[#c7b79c]">Ubicacion</p>
-            <p className="mt-4 text-[23px] font-bold">Restaurante El Mirador</p>
-            <p className="mt-2 text-[11px] tracking-[0.7px] text-[#c7b79c]">SAN SALVADOR, EL SALVADOR</p>
-            <p className="mt-6 max-w-[340px] text-[13px] leading-[1.7] text-[#f4eee2]/80">Un espacio para encontrarnos, brindar y celebrar cada momento de este dia.</p>
-            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante+El+Mirador+San+Salvador" target="_blank" rel="noreferrer" className="relative mt-7 grid h-[54px] w-[184px] place-items-center text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c]">
+          <img src="/figma/design/location-texture.png" alt="" className="absolute inset-x-0 bottom-0 z-0 h-[49%] w-full object-cover opacity-25 mix-blend-screen" />
+          <div data-invitation-reveal className="relative z-10 flex flex-1 flex-col items-center justify-center px-7 text-[#f4eee2]">
+            <p className="font-script text-[30px] leading-none text-[#c7b79c]">Ubicación</p>
+            <p className="mt-4 text-[20px] font-bold uppercase tracking-[0.2px]">Restaurante Hacienda Real</p>
+            <p className="mt-2 text-[11px] tracking-[0.5px] text-[#c7b79c]">Km 14.5 carretera a Santa Tecla, La Libertad</p>
+            <p className="mt-6 max-w-[340px] text-[13px] leading-[1.7] text-[#f4eee2]/80">Habrá parqueo disponible dentro de las instalaciones para todos los invitados.</p>
+            <a href="https://www.google.com/maps/search/?api=1&query=Restaurante+Hacienda+Real+La+Libertad+El+Salvador" target="_blank" rel="noreferrer" className="relative mt-7 grid h-[54px] w-[184px] place-items-center text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c]">
               <img src="/figma/design/map-button.svg" alt="" className="absolute inset-0 h-full w-full" />
               <span className="relative">Ver mapa</span>
             </a>
@@ -370,7 +370,7 @@ export function InvitationExperience({
           <img src="/figma/photos/sentados-en-piedra.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover opacity-35 saturate-[0.55]" loading="lazy" />
           <div className="absolute inset-0 -z-20 bg-[#8b9574]/65 mix-blend-multiply" />
           <div data-invitation-reveal>
-            <p className="font-script text-[38px] leading-none">RSVP</p>
+            <p className="font-script text-[30px] leading-none">RSVP</p>
             <p className="mt-3 text-[19px] font-bold">¿Nos acompanaras?</p>
             <p className="mx-auto mt-4 max-w-[335px] text-[12px] leading-[1.65]">Agradecemos confirmar tu asistencia antes del 15 de septiembre de 2026.</p>
           </div>
@@ -378,7 +378,7 @@ export function InvitationExperience({
           {savedStatus ? (
             <div data-invitation-reveal className="mx-auto mt-8 max-w-[348px] border border-[#2a2a1c]/25 bg-[#f4eee2]/90 px-6 py-7">
               {savedStatus === 'ACCEPTED' ? <Check className="mx-auto" size={28} /> : <Heart className="mx-auto" size={28} />}
-              <p className="font-script mt-4 text-[31px] leading-none">{savedStatus === 'ACCEPTED' ? '¡Te esperamos!' : 'Gracias por avisarnos'}</p>
+              <p className="font-script mt-4 text-[30px] leading-none">{savedStatus === 'ACCEPTED' ? '¡Te esperamos!' : 'Gracias por avisarnos'}</p>
               <p className="mt-4 text-[12px] leading-5">Tu respuesta fue registrada para {invitation.recipientName}.</p>
             </div>
           ) : (
@@ -422,7 +422,7 @@ export function InvitationExperience({
           <section key={photos[0].src} id={pageIndex === 0 ? 'galeria' : undefined} className="story-screen paper-texture relative isolate flex flex-col overflow-hidden px-5 py-10 text-[#2a2a1c]">
             <img src="/figma/design/gallery-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-25 mix-blend-multiply" />
             <header data-invitation-reveal className="shrink-0 text-center">
-              <p className="font-script text-[38px] leading-none text-[#8b9574]">Galeria</p>
+              <p className="font-script text-[30px] leading-none text-[#8b9574]">Galería</p>
               <p className="mt-2 text-[13px] font-bold uppercase tracking-[0.5px]">Nuestros momentos</p>
             </header>
             <div className="mt-7 grid min-h-0 flex-1 grid-cols-2 gap-3">
