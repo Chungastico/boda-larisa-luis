@@ -482,9 +482,11 @@ export function AdminDashboard({
                 {isImporting ? <LoaderCircle className="animate-spin" size={16} /> : <Upload size={16} />}
                 {isImporting ? 'Importando...' : 'Importar Excel'}
               </Button>
-              <a href="/i/familia-rodriguez-k7m2p4" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#4c513d] underline underline-offset-4">
-                Ver invitacion de muestra <ExternalLink size={15} />
-              </a>
+              {invitations[0] && (
+                <a href={`/i/${invitations[0].slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#4c513d] underline underline-offset-4">
+                  Ver una invitacion <ExternalLink size={15} />
+                </a>
+              )}
             </div>
           </div>
 
