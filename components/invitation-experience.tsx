@@ -333,13 +333,19 @@ export function InvitationExperience({
         </section>
 
         <section id="vestimenta" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-center text-[#2a2a1c]">
-          <img src="/figma/photos/boda-all-black.png" alt="Larissa y Luis" className="absolute inset-x-0 top-0 -z-30 h-[65%] w-full object-cover object-center" loading="lazy" />
-          <div className="absolute inset-x-0 top-0 -z-20 h-[65%] bg-[#2a2a1c]/55 mix-blend-multiply" />
-          <img src="/figma/design/dress-card.svg" alt="" className="absolute inset-x-0 bottom-0 -z-10 h-[48%] w-full" />
-          <div data-invitation-reveal className="absolute inset-x-7 bottom-[7%]">
-            <p className="font-script text-[38px] leading-none text-[#8b9574]">Vestimenta</p>
-            <p className="mt-4 text-[20px] font-bold">Formal elegante</p>
-            <p className="mx-auto mt-5 max-w-[325px] text-[13px] leading-[1.75]">Agradecemos que nos acompanes con tonos neutros, oscuros o suaves para celebrar juntos esta ocasion tan especial.</p>
+          <img src="/figma/design/dress-photo.png" alt="Larissa y Luis vestidos de negro" className="absolute inset-x-0 top-0 z-0 h-[65%] w-full object-cover object-center" loading="lazy" />
+          <img src="/figma/design/dress-card.svg" alt="" className="absolute inset-x-0 bottom-0 z-10 h-[52%] w-full" />
+          <div data-invitation-reveal className="absolute inset-x-7 bottom-[5%] z-20 flex flex-col items-center">
+            <p className="font-script text-[38px] leading-none text-[#8b9574]">Código de vestimenta</p>
+            <p className="mt-4 text-[18px] font-bold uppercase tracking-[0.7px]">Etiqueta semi-formal</p>
+            <p className="mx-auto mt-6 max-w-[340px] text-[13px] leading-[1.7] text-[#4c4f43]">
+              <span className="block">Pedimos a nuestros invitados vestir de etiqueta semi-formal.</span>
+              <span className="mt-1 block">Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</span>
+            </p>
+            <a href="#galeria" className="mt-7 grid h-[54px] w-[184px] place-items-center bg-[#8b9574] text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c] shadow-[0_5px_7px_rgba(42,42,28,0.18)] [clip-path:polygon(7%_0,100%_0,100%_82%,93%_100%,0_100%,0_18%)] hover:brightness-95">
+              Ver inspo
+            </a>
+            <p className="mt-7 text-[15px] font-bold">En esta ocasión, el evento es solo para adultos.</p>
           </div>
         </section>
 
