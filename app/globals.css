@@ -5,6 +5,14 @@
 @import 'shadcn/tailwind.css';
 @import '@clerk/ui/themes/shadcn.css';
 
+@font-face {
+  font-family: 'Aston Script';
+  src: url('/fonts/aston-script.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -70,7 +78,7 @@
   --radius: 7px;
   --font-sans: 'Arimo', Arial, Helvetica, sans-serif;
   --font-display: 'Arimo', Arial, Helvetica, sans-serif;
-  --font-script: 'Aston Script Bold', 'Aston Script', 'Snell Roundhand', 'URW Chancery L', cursive;
+  --font-script: 'Aston Script';
 }
 
 * {

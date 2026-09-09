@@ -2,15 +2,20 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 const localSiteUrl = 'http://localhost:3000';
-const vercelSiteUrl = process.env.VERCEL_URL
+const vercelProductionSiteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : null;
+const vercelDeploymentSiteUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : localSiteUrl;
 
 function getMetadataBase() {
   try {
-    return new URL(process.env.APP_URL || vercelSiteUrl);
+    return new URL(
+      vercelProductionSiteUrl || process.env.APP_URL || vercelDeploymentSiteUrl,
+    );
   } catch {
-    return new URL(vercelSiteUrl);
+    return new URL(vercelProductionSiteUrl || vercelDeploymentSiteUrl);
   }
 }
 
