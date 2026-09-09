@@ -441,7 +441,7 @@ export function InvitationExperience({
               <span className="block">Pedimos a nuestros invitados vestir de etiqueta semi-formal.</span>
               <span className="mt-1 block">Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</span>
             </p>
-            <a href="#galeria" className="mt-7 grid h-[54px] w-[184px] place-items-center bg-[#8b9574] text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c] shadow-[0_5px_7px_rgba(42,42,28,0.18)] [clip-path:polygon(7%_0,100%_0,100%_82%,93%_100%,0_100%,0_18%)] hover:brightness-95">
+            <a href="https://pin.it/4PcnHhnvF" target="_blank" rel="noreferrer" aria-label="Ver inspiración de vestimenta en Pinterest" className="mt-7 grid h-[54px] w-[184px] place-items-center bg-[#8b9574] text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c] shadow-[0_5px_7px_rgba(42,42,28,0.18)] [clip-path:polygon(7%_0,100%_0,100%_82%,93%_100%,0_100%,0_18%)] hover:brightness-95">
               Ver inspo
             </a>
             <p className="mt-7 text-[15px] font-bold">En esta ocasión, el evento es solo para adultos.</p>
