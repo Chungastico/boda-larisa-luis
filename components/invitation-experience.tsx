@@ -120,7 +120,6 @@ export function InvitationExperience({
   const pageRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLImageElement>(null);
   const isFamilyInvitation = invitation.invitees.length > 1 || invitation.maxGuests > 1;
-  const hasExistingResponse = invitation.status !== 'PENDING';
   const [decision, setDecision] = useState<RsvpStatus | null>(
     invitation.status === 'PENDING' ? null : invitation.status,
   );
@@ -129,8 +128,7 @@ export function InvitationExperience({
   );
   const [note, setNote] = useState(invitation.note ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [savedStatus, setSavedStatus] = useState<RsvpStatus | null>(hasExistingResponse ? invitation.status : null);
-  const [editPromptOpen, setEditPromptOpen] = useState(hasExistingResponse);
+  const [savedStatus, setSavedStatus] = useState<RsvpStatus | null>(invitation.status === 'PENDING' ? null : invitation.status);
   const [error, setError] = useState('');
   const [familyMode, setFamilyMode] = useState<FamilyRsvpMode | null>(() => {
     if (!isFamilyInvitation) return null;
@@ -171,7 +169,6 @@ export function InvitationExperience({
       }
 
       setSavedStatus(status);
-      setEditPromptOpen(false);
       return payload.invitation;
     },
     [invitation.slug],
@@ -520,9 +517,9 @@ export function InvitationExperience({
                         type="button"
                         aria-pressed={familyMode === 'all'}
                         onClick={selectAllFamilyMembers}
-                        className={`relative h-[46px] overflow-hidden text-[11px] font-bold uppercase tracking-[0.35px] text-[#f4eee2] ${familyMode === 'all' ? 'ring-2 ring-[#c7b79c] ring-offset-1 ring-offset-[#d9dfc2]' : ''}`}
+                        className={`relative h-[46px] text-[11px] font-bold uppercase tracking-[0.35px] transition-colors ${familyMode === 'all' ? 'overflow-hidden text-[#f4eee2] ring-2 ring-[#c7b79c] ring-offset-1 ring-offset-[#d9dfc2]' : 'border border-[#2a2a1c] bg-[#f4eee2]/40 text-[#2a2a1c]'}`}
                       >
-                        <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                        {familyMode === 'all' && <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />}
                         <span className="relative">Confirmar todos</span>
                       </button>
                       <button
@@ -584,9 +581,9 @@ export function InvitationExperience({
                         type="button"
                         aria-pressed={decision === 'ACCEPTED'}
                         onClick={() => { setDecision('ACCEPTED'); setSavedStatus(null); setError(''); }}
-                        className="relative h-[46px] overflow-hidden text-[11px] font-bold uppercase tracking-[0.35px] text-[#f4eee2]"
+                        className={`relative h-[46px] text-[11px] font-bold uppercase tracking-[0.35px] transition-colors ${decision === 'ACCEPTED' ? 'overflow-hidden text-[#f4eee2]' : 'border border-[#2a2a1c] bg-[#f4eee2]/40 text-[#2a2a1c]'}`}
                       >
-                        <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                        {decision === 'ACCEPTED' && <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />}
                         <span className="relative">Sí, asistiré</span>
                       </button>
                       <button
@@ -620,30 +617,6 @@ export function InvitationExperience({
               </div>
             )}
 
-            {editPromptOpen && savedStatus && (
-              <div className="absolute inset-0 z-30 grid place-items-center bg-[#2a2a1c]/45 px-7" role="dialog" aria-modal="true" aria-labelledby="rsvp-edit-title">
-                <div className="w-full max-w-[348px] border border-[#2a2a1c]/35 bg-[#f4eee2] px-5 py-6 text-center text-[#2a2a1c] shadow-[0_8px_24px_rgba(42,42,28,0.2)]">
-                  <p id="rsvp-edit-title" className="font-script text-[30px] leading-none">Tu respuesta ya está guardada</p>
-                  <p className="mt-4 text-[12px] leading-5">¿Deseas editar el estado de tu invitación?</p>
-                  <div className="mt-6 grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { setEditPromptOpen(false); setSavedStatus(null); setError(''); }}
-                      className="h-[44px] bg-[#2a2a1c] px-3 text-[11px] font-bold uppercase tracking-[0.45px] text-[#f4eee2]"
-                    >
-                      Editar respuesta
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setEditPromptOpen(false); setError(''); }}
-                      className="h-[44px] border border-[#2a2a1c] bg-[#f4eee2]/45 px-3 text-[11px] font-bold uppercase tracking-[0.45px]"
-                    >
-                      Mantener respuesta
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
