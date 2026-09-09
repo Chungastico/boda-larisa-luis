@@ -301,12 +301,12 @@ export function InvitationExperience({
             data-invitation-reveal
             src="/figma/type/countdown-title.svg"
             alt=""
-            className="absolute left-[40.2083%] top-[95px] h-auto w-[281px] max-w-[72%] -translate-x-1/2"
+            className="absolute left-[40.2083%] top-[195px] h-auto w-[281px] max-w-[72%] -translate-x-1/2"
           />
-          <p data-invitation-reveal className="absolute left-[61.6667%] top-[165px] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-[1px]">
+          <p data-invitation-reveal className="absolute left-[61.6667%] top-[265px] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-[1px]">
             Falta poco
           </p>
-          <div data-invitation-reveal className="absolute inset-x-0 top-[349px] px-4"><Countdown /></div>
+          <div data-invitation-reveal className="absolute inset-x-0 top-[449px] px-4"><Countdown /></div>
         </section>
 
         <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
