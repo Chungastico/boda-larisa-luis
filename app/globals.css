@@ -103,7 +103,7 @@ select {
 
 .font-script {
   font-family: var(--font-script);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .paper-texture {
