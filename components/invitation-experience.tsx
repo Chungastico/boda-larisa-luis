@@ -703,13 +703,6 @@ export function InvitationExperience({
           </div>
         </section>
 
-        <footer className="story-screen relative isolate flex flex-col items-center justify-center overflow-hidden bg-[#2a2a1c] px-7 text-center text-[#f4eee2]">
-          <img src="/figma/photos/playa-oscuro.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover opacity-30 saturate-[0.45]" loading="lazy" />
-          <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/75 mix-blend-multiply" />
-          <img data-invitation-reveal src="/figma/monogram.svg" alt="Monograma de Larissa y Luis" className="h-20 w-20 brightness-0 invert" />
-          <p data-invitation-reveal className="mt-8 text-[16px] font-bold uppercase tracking-[3px]">Larissa y Luis</p>
-          <p data-invitation-reveal className="mt-4 text-[12px] tracking-[2px] text-[#c7b79c]">4 · 10 · 2026</p>
-        </footer>
       </div>
     </main>
   );

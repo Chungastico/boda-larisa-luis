@@ -161,7 +161,7 @@ select {
 .rsvp-screen {
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
   scrollbar-width: none;
 }
 
