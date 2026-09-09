@@ -435,9 +435,9 @@ export function InvitationExperience({
           <img src="/figma/design/dress-photo.png" alt="Larissa y Luis vestidos de negro" className="absolute inset-x-0 top-0 z-0 h-[65%] w-full object-cover object-center" loading="lazy" />
           <img src="/figma/design/dress-card.svg" alt="" className="absolute inset-x-0 bottom-0 z-10 h-[52%] w-full" />
           <div data-invitation-reveal className="absolute inset-x-7 bottom-[5%] z-20 flex flex-col items-center">
-            <p className="font-script text-[30px] leading-none text-[#8b9574]">Código de vestimenta</p>
-            <p className="mt-4 text-[18px] font-bold uppercase tracking-[0.7px]">Etiqueta semi-formal</p>
-            <p className="mx-auto mt-6 max-w-[340px] text-[13px] leading-[1.7] text-[#4c4f43]">
+            <p className="font-script text-[30px] font-normal leading-[normal] text-[#8b9574] [text-shadow:0px_4px_10px_rgba(0,0,0,0.25)]">Código de vestimenta</p>
+            <p className="mt-4 text-[22px] font-bold uppercase tracking-[0.5px]">Etiqueta semi-formal</p>
+            <p className="mx-auto max-w-[409px] mt-6 text-[13.5px] leading-[1.75] text-[rgba(42,42,28,0.85)]">
               <span className="block">Pedimos a nuestros invitados vestir de etiqueta semi-formal.</span>
               <span className="mt-1 block">Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</span>
             </p>
