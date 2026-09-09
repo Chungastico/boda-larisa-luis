@@ -311,12 +311,10 @@ export function InvitationExperience({
 
         <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
           <div data-invitation-reveal className="w-full max-w-[374px]">
-            <figure className="mx-auto max-w-[300px] overflow-hidden rounded-t-[94px] border-[5px] border-[#f4eee2] bg-[#f4eee2]">
-              <img src="/figma/photos/vestido-y-camisa-celeste.png" alt="Larissa y Luis juntos" className="aspect-[3/4] w-full object-cover" loading="lazy" />
-            </figure>
-            <p className="font-script mt-5 text-[38px] leading-none">¡Bienvenidos!</p>
-            <p className="mx-auto mt-5 max-w-[335px] text-[13px] leading-[1.75]">
-              Queremos que nos acompanes a celebrar el inicio de esta nueva etapa, rodeados de las personas que mas queremos. El amor se multiplica cuando se comparte.
+            <img src="/figma/design/welcome-photo.png" alt="Larissa y Luis juntos" className="mx-auto block h-auto w-full max-w-[374px] object-contain" loading="lazy" />
+            <p className="font-script mt-5 text-[42px] leading-none tracking-normal">¡Bienvenidos!</p>
+            <p className="mx-auto mt-5 max-w-[335px] text-[13px] leading-[1.7]">
+              Queremos que nos acompañes a celebrar el inicio de esta nueva etapa, rodeados de las personas que más queremos. El amor se multiplica cuando se comparte.
             </p>
             <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.5px]">¡Te esperamos!</p>
           </div>
