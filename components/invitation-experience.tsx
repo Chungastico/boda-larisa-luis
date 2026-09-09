@@ -67,17 +67,17 @@ function Countdown() {
     const seconds = totalSeconds % 60;
 
     return [
-      { value: days, label: 'Dias' },
+      { value: days, label: 'Días' },
       { value: hours, label: 'Horas' },
-      { value: minutes, label: 'Minutos' },
-      { value: seconds, label: 'Segundos' },
+      { value: minutes, label: 'Min' },
+      { value: seconds, label: 'Seg' },
     ];
   }, [remaining]);
 
   return (
-    <div className="grid grid-cols-4 gap-1.5" aria-label="Cuenta regresiva">
+    <div className="mx-auto grid w-full max-w-[448px] grid-cols-4 gap-2" aria-label="Cuenta regresiva">
       {parts.map((part, index) => (
-        <div key={part.label} className="relative isolate h-[84px] overflow-hidden text-center text-[#2a2a1c]">
+        <div key={part.label} className="relative isolate aspect-[106/84] overflow-hidden text-center text-[#2a2a1c]">
           <img
             src={index % 2 === 0
               ? '/figma/design/countdown-chip-olive.svg'
@@ -85,10 +85,10 @@ function Countdown() {
             alt=""
             className="absolute inset-0 -z-10 h-full w-full"
           />
-          <p className="pt-4 font-display text-[22px] font-bold leading-none tabular-nums">
+          <p className="pt-[14px] font-display text-[22px] font-bold leading-none tabular-nums">
             {String(part.value).padStart(2, '0')}
           </p>
-          <p className="mt-1 text-[7px] font-bold uppercase tracking-[0.6px]">{part.label}</p>
+          <p className="mt-[3px] text-[8.5px] font-bold uppercase tracking-[1px]">{part.label}</p>
         </div>
       ))}
     </div>
@@ -271,12 +271,12 @@ export function InvitationExperience({
             <a href="#inicio" aria-label="Inicio" className="grid place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
             <a href="#bienvenida" className="whitespace-nowrap hover:opacity-60">Bienvenida</a>
             <a href="#vestimenta" className="whitespace-nowrap hover:opacity-60">Vestimenta</a>
-            <a href="#ubicacion" className="whitespace-nowrap hover:opacity-60">Ubicacion</a>
+            <a href="#ubicacion" className="whitespace-nowrap hover:opacity-60">Ubicación</a>
             <a href="#rsvp" className="whitespace-nowrap hover:opacity-60">RSVP</a>
-            <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galeria</a>
+            <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galería</a>
           </nav>
 
-          <div className="relative flex min-h-[calc(100svh-58px)] flex-col items-center overflow-hidden px-7 pb-14 pt-16 text-center">
+          <div className="relative min-h-[calc(100svh-58px)] overflow-hidden text-center">
             <img
               ref={heroImageRef}
               src="/figma/hero-1.png"
@@ -285,27 +285,28 @@ export function InvitationExperience({
             />
             <div className="absolute inset-0 -z-20 bg-[#1d2118]/[0.12]" />
 
-            <p data-invitation-reveal className="text-[14px] font-bold tracking-[4.5px] text-[#f4eee2]">4 · 10 · 2026</p>
-            <div className="mt-auto">
-              <h1 className="sr-only">Larissa y Luis</h1>
-              <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="mx-auto h-auto w-[247px] max-w-full" />
-              <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="mx-auto my-2 h-auto w-[55px]" />
-              <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="mx-auto h-auto w-[169px] max-w-full" />
-              <p data-invitation-reveal className="mt-11 text-[15px] font-bold uppercase tracking-[3px] text-[#c7b79c]">Nos casamos</p>
-            </div>
+            <p data-invitation-reveal className="absolute left-1/2 top-[40px] w-full -translate-x-1/2 text-[20px] font-bold tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
+            <h1 className="sr-only">Larissa y Luis</h1>
+            <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="absolute left-[38.125%] top-[421px] h-auto w-[51.4583%] -translate-x-1/2" />
+            <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="absolute left-1/2 top-[514px] h-auto w-[11.4583%] -translate-x-1/2" />
+            <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="absolute left-[63.5417%] top-[573px] h-auto w-[35.2083%] -translate-x-1/2" />
+            <p data-invitation-reveal className="absolute left-1/2 top-[706px] w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
           </div>
         </section>
 
-        <section className="story-screen relative isolate flex flex-col justify-center overflow-hidden bg-[#2a2a1c] px-6 text-center text-[#f4eee2]">
-          <img src="/figma/photos/hand.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover object-center opacity-35 saturate-[0.5]" />
-          <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/65 mix-blend-multiply" />
-          <img src="/figma/design/countdown-gradient-a.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-70" />
-          <img src="/figma/design/countdown-gradient-b.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-70" />
-          <div>
-            <p data-invitation-reveal className="font-script text-[38px] leading-none text-[#c7b79c]">Cuenta regresiva</p>
-            <p data-invitation-reveal className="mt-3 text-[17px] font-bold uppercase tracking-[0.3px]">Falta poco para celebrar juntos</p>
-          </div>
-          <div data-invitation-reveal className="mt-16"><Countdown /></div>
+        <section id="cuenta-regresiva" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-center text-[#f4eee2]">
+          <img src="/figma/countdown-card.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover object-center" />
+          <h2 className="sr-only">Cuenta regresiva</h2>
+          <img
+            data-invitation-reveal
+            src="/figma/type/countdown-title.svg"
+            alt=""
+            className="absolute left-[40.2083%] top-[45px] h-auto w-[281px] max-w-[72%] -translate-x-1/2"
+          />
+          <p data-invitation-reveal className="absolute left-[61.6667%] top-[115px] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-[1px]">
+            Falta poco
+          </p>
+          <div data-invitation-reveal className="absolute inset-x-0 top-[299px] px-4"><Countdown /></div>
         </section>
 
         <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
