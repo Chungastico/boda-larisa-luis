@@ -449,11 +449,11 @@ export function InvitationExperience({
         </section>
 
         <section id="ubicacion" className="story-screen relative isolate flex flex-col overflow-hidden bg-[#2a2a1c] text-center">
-          <div className="relative h-[53%] shrink-0 overflow-hidden rounded-b-[46px]">
+          <div className="relative z-10 h-[53%] shrink-0 overflow-hidden rounded-b-[46px]">
             <img src="/figma/design/location-photo.png" alt="Larissa y Luis sentados juntos" className="h-full w-full object-cover object-center" loading="lazy" />
           </div>
           <img src="/figma/design/location-background.png" alt="" className="absolute inset-0 z-0 h-full w-full object-cover" />
-          <div data-invitation-reveal className="relative z-10 flex flex-1 flex-col items-center justify-center px-7 text-[#f4eee2]">
+          <div data-invitation-reveal className="relative z-20 flex flex-1 flex-col items-center justify-center px-7 text-[#f4eee2]">
             <p className="font-script text-[30px] leading-none text-[#c7b79c]">Ubicación</p>
             <p className="mt-4 text-[20px] font-bold uppercase tracking-[0.2px]">Restaurante Hacienda Real</p>
             <p className="mt-2 text-[11px] tracking-[0.5px] text-[#c7b79c]">Km 14.5 carretera a Santa Tecla, La Libertad</p>
