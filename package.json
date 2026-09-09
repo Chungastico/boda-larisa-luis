@@ -11,9 +11,9 @@
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt",
-    "db:setup": "node scripts/setup-database.mjs",
-    "guests:preview": "node scripts/import-guests.mjs --dry-run",
-    "guests:import": "node scripts/import-guests.mjs"
+    "db:setup": "node --env-file=.env scripts/setup-database.mjs",
+    "guests:preview": "node --env-file=.env scripts/import-guests.mjs --dry-run",
+    "guests:import": "node --env-file=.env scripts/import-guests.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

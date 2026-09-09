@@ -1,16 +1,19 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ArrowUpDown,
   Clipboard,
   ExternalLink,
+  FileSpreadsheet,
+  LoaderCircle,
   Pencil,
   Search,
+  Upload,
   Users,
 } from 'lucide-react';
-import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   flexRender,
   getCoreRowModel,
@@ -38,6 +41,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { Invitation, RsvpStatus } from '@/lib/invitations';
+import type { GuestImportEntry } from '@/lib/guest-import';
+
+const AdminUserButton = dynamic(
+  () => import('@/components/admin-user-button').then((module) => module.AdminUserButton),
+  { ssr: false },
+);
 
 const statusMeta: Record<RsvpStatus, { label: string; className: string; dot: string }> = {
   PENDING: {
@@ -74,6 +83,37 @@ function formatResponseDate(value: string | null) {
     day: 'numeric',
     month: 'short',
   }).format(new Date(value));
+}
+
+async function workbookEntries(file: File): Promise<GuestImportEntry[]> {
+  const [buffer, XLSX] = await Promise.all([file.arrayBuffer(), import('xlsx')]);
+  const workbook = XLSX.read(buffer, { cellStyles: true });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!sheet) throw new Error('No encontramos una hoja para importar.');
+
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    defval: null,
+    raw: false,
+  });
+  const columns = [
+    { name: 1, gender: 2, letter: 'B', source: 'Invitados Larissa' as const },
+    { name: 9, gender: 10, letter: 'J', source: 'Invitados Luis' as const },
+  ];
+
+  return rows.flatMap((row, index) => columns.map((column) => {
+    const cell = sheet[`${column.letter}${index + 1}`];
+    const name = row[column.name];
+    const gender = row[column.gender];
+    return {
+      name: typeof name === 'string' ? name.trim() : '',
+      gender: typeof gender === 'string' ? gender.trim().toUpperCase() : null,
+      color: typeof cell?.s?.fgColor?.rgb === 'string' ? cell.s.fgColor.rgb.slice(-6) : null,
+      source: column.source,
+    };
+  })).filter((entry): entry is GuestImportEntry => (
+    Boolean(entry.name) && (entry.gender === 'F' || entry.gender === 'M')
+  ));
 }
 
 function SortHead<TData>({ column, label }: { column: Column<TData, unknown>; label: string }) {
@@ -236,6 +276,10 @@ export function AdminDashboard({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [editing, setEditing] = useState<Invitation | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState('');
+  const [importError, setImportError] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const metrics = useMemo(() => {
     const accepted = invitations.filter((item) => item.status === 'ACCEPTED');
@@ -244,6 +288,7 @@ export function AdminDashboard({
       people: invitations.reduce((sum, item) => sum + item.maxGuests, 0),
       accepted: accepted.reduce((sum, item) => sum + item.attendingCount, 0),
       pending: invitations.filter((item) => item.status === 'PENDING').length,
+      declined: invitations.filter((item) => item.status === 'DECLINED').length,
     };
   }, [invitations]);
 
@@ -260,6 +305,39 @@ export function AdminDashboard({
     await navigator.clipboard.writeText(`${window.location.origin}/i/${invitation.slug}`);
     setCopiedId(invitation.id);
     window.setTimeout(() => setCopiedId(null), 1_800);
+  }
+
+  async function importWorkbook(file: File) {
+    setIsImporting(true);
+    setImportError('');
+    setImportMessage('');
+
+    try {
+      const entries = await workbookEntries(file);
+      if (!entries.length) throw new Error('No encontramos nombres validos en las columnas de invitados.');
+
+      const response = await fetch('/api/admin/invitations/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        summary?: { invitations: number; guests: number };
+        invitations?: Invitation[];
+        error?: string;
+      } | null;
+
+      if (!response.ok || !payload?.summary || !payload.invitations) {
+        throw new Error(payload?.error ?? 'No se pudo importar el archivo.');
+      }
+
+      setInvitations(payload.invitations);
+      setImportMessage(`${payload.summary.guests} personas organizadas en ${payload.summary.invitations} invitaciones.`);
+    } catch (requestError) {
+      setImportError(requestError instanceof Error ? requestError.message : 'No se pudo importar el archivo.');
+    } finally {
+      setIsImporting(false);
+    }
   }
 
   const columns = useMemo<ColumnDef<Invitation>[]>(
@@ -377,7 +455,7 @@ export function AdminDashboard({
             <Link href="/admin" className="font-display text-2xl leading-none">Larissa &amp; Luis</Link>
             <div className="flex items-center gap-2">
               {isDemo && <span className="hidden border border-[#d6c68b] bg-[#faf2d7] px-2 py-1 text-xs text-[#775f1d] sm:block">Muestra</span>}
-              <UserButton />
+              <AdminUserButton />
             </div>
           </div>
         </header>
@@ -388,12 +466,36 @@ export function AdminDashboard({
               <p className="text-xs uppercase text-[#6e735f]">Boda / 04.10.2026</p>
               <h1 className="font-display mt-2 text-4xl leading-none">Control de invitados</h1>
             </div>
-            <a href="/i/familia-rodriguez-k7m2p4" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#4c513d] underline underline-offset-4">
-              Ver invitacion de muestra <ExternalLink size={15} />
-            </a>
+            <div className="flex flex-wrap items-center gap-4">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".xls,.xlsx"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.currentTarget.value = '';
+                  if (file) void importWorkbook(file);
+                }}
+              />
+              <Button type="button" onClick={() => importInputRef.current?.click()} disabled={isImporting || isDemo} className="h-10 rounded-none bg-[#424934] px-4">
+                {isImporting ? <LoaderCircle className="animate-spin" size={16} /> : <Upload size={16} />}
+                {isImporting ? 'Importando...' : 'Importar Excel'}
+              </Button>
+              <a href="/i/familia-rodriguez-k7m2p4" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#4c513d] underline underline-offset-4">
+                Ver invitacion de muestra <ExternalLink size={15} />
+              </a>
+            </div>
           </div>
 
-          <section className="mt-8 grid grid-cols-2 border-y border-[#d8d0bf] sm:grid-cols-4">
+          {(importMessage || importError) && (
+            <div className={`mt-5 flex items-center gap-2 border px-4 py-3 text-sm ${importError ? 'border-[#d7a89f] bg-[#f6e3df] text-[#8b453b]' : 'border-[#aac495] bg-[#e7f0df] text-[#416337]'}`}>
+              <FileSpreadsheet size={17} />
+              {importError || importMessage}
+            </div>
+          )}
+
+          <section className="mt-8 grid grid-cols-2 border-y border-[#d8d0bf] sm:grid-cols-5">
             <div className="border-b border-r border-[#d8d0bf] px-4 py-5 sm:border-b-0">
               <p className="text-xs uppercase text-[#6e735f]">Invitaciones</p>
               <p className="font-display mt-2 text-3xl leading-none">{metrics.invitations}</p>
@@ -409,6 +511,10 @@ export function AdminDashboard({
             <div className="px-4 py-5">
               <p className="text-xs uppercase text-[#6e735f]">Pendientes</p>
               <p className="font-display mt-2 text-3xl leading-none text-[#9a7723]">{metrics.pending}</p>
+            </div>
+            <div className="border-t border-[#d8d0bf] px-4 py-5 sm:border-l sm:border-t-0">
+              <p className="text-xs uppercase text-[#6e735f]">No asistiran</p>
+              <p className="font-display mt-2 text-3xl leading-none text-[#9a5148]">{metrics.declined}</p>
             </div>
           </section>
 

@@ -1,4 +1,6 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { neon } from '@neondatabase/serverless';
+import { buildImportedInvitations, type GuestImportEntry } from '@/lib/guest-import';
 
 export const RSVP_STATUSES = ['PENDING', 'ACCEPTED', 'DECLINED'] as const;
 
@@ -24,6 +26,11 @@ export type Invitation = {
   respondedAt: string | null;
   createdAt: string;
   invitees: Invitee[];
+};
+
+export type GuestImportSummary = {
+  invitations: number;
+  guests: number;
 };
 
 type DatabaseInvitation = {
@@ -279,4 +286,58 @@ export async function updateInvitationDetails(
   `;
 
   return (await getAdminInvitations()).find((item) => item.id === id) ?? null;
+}
+
+function slugify(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 44);
+}
+
+export async function importGuestEntries(entries: GuestImportEntry[]): Promise<GuestImportSummary> {
+  const sql = getSql();
+  if (!sql) {
+    throw new Error('Configura DATABASE_URL antes de importar invitados.');
+  }
+
+  const invitations = buildImportedInvitations(entries);
+  for (const invitation of invitations) {
+    const slug = `${slugify(invitation.recipientName)}-${createHash('sha256')
+      .update(invitation.importKey)
+      .digest('hex')
+      .slice(0, 6)}`;
+    const rows = await sql`
+      INSERT INTO invitations (
+        id, import_key, slug, recipient_name, household_name, max_guests, source_label
+      ) VALUES (
+        ${randomUUID()}, ${invitation.importKey}, ${slug}, ${invitation.recipientName},
+        ${invitation.householdName}, ${invitation.maxGuests}, ${invitation.sourceLabel}
+      )
+      ON CONFLICT (import_key) DO UPDATE SET
+        recipient_name = EXCLUDED.recipient_name,
+        household_name = EXCLUDED.household_name,
+        max_guests = EXCLUDED.max_guests,
+        source_label = EXCLUDED.source_label,
+        updated_at = NOW()
+      RETURNING id
+    `;
+    const invitationId = (rows[0] as { id: string }).id;
+
+    for (const member of invitation.members) {
+      await sql`
+        INSERT INTO invitees (id, invitation_id, name, gender)
+        VALUES (${randomUUID()}, ${invitationId}, ${member.name}, ${member.gender})
+        ON CONFLICT (invitation_id, name) DO UPDATE SET gender = EXCLUDED.gender
+      `;
+    }
+  }
+
+  return {
+    invitations: invitations.length,
+    guests: invitations.reduce((total, invitation) => total + invitation.members.length, 0),
+  };
 }

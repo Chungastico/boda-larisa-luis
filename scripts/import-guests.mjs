@@ -1,8 +1,9 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { neon } from '@neondatabase/serverless';
 import * as XLSXModule from 'xlsx/xlsx.mjs';
+import { buildImportedInvitations } from '../lib/guest-import.ts';
 
 const XLSX = XLSXModule;
 
@@ -18,13 +19,6 @@ if (!existsSync(sourceFile)) {
   throw new Error(`Guest file not found: ${sourceFile}`);
 }
 
-const colorLabels = {
-  FFFF00: 'Grupo amarillo',
-  FF99CC: 'Grupo rosa',
-  FFCC00: 'Grupo dorado',
-  '99CC00': 'Grupo verde',
-};
-
 function slugify(value) {
   return value
     .normalize('NFD')
@@ -33,13 +27,6 @@ function slugify(value) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
     .slice(0, 44);
-}
-
-function familyKey(name, surnameCounts) {
-  const parts = name.replace(/\([^)]*\)/g, '').trim().split(/\s+/);
-  const surname = parts.at(-1)?.toLowerCase() ?? '';
-
-  return surnameCounts.get(surname) > 1 ? `family:${surname}` : `guest:${slugify(name)}`;
 }
 
 function readWorkbookRoster(file) {
@@ -51,65 +38,28 @@ function readWorkbookRoster(file) {
     raw: false,
   });
 
-  // The source keeps the roster in columns B (name) and C (gender), starting at row 4.
-  const entries = rows
-    .map((row, index) => {
-      const name = typeof row[1] === 'string' ? row[1].trim() : '';
-      const gender = typeof row[2] === 'string' ? row[2].trim().toUpperCase() : '';
-      const cell = sheet[`B${index + 1}`];
-      const color = cell?.s?.fgColor?.rgb ?? null;
-
-      return { name, gender, color };
-    })
-    .filter((entry) => entry.name && /^(F|M)$/.test(entry.gender));
-
-  const surnameCounts = new Map();
-  for (const entry of entries) {
-    const surname = entry.name
-      .replace(/\([^)]*\)/g, '')
-      .trim()
-      .split(/\s+/)
-      .at(-1)
-      ?.toLowerCase();
-    if (surname) surnameCounts.set(surname, (surnameCounts.get(surname) ?? 0) + 1);
-  }
-
-  const groups = new Map();
-  for (const entry of entries) {
-    const key = familyKey(entry.name, surnameCounts);
-    const existing = groups.get(key) ?? [];
-    existing.push(entry);
-    groups.set(key, existing);
-  }
-
-  const usedSlugs = new Set();
-  const takeSlug = (base) => {
-    let candidate = base;
-    let suffix = 2;
-    while (usedSlugs.has(candidate)) candidate = `${base}-${suffix++}`;
-    usedSlugs.add(candidate);
-    return candidate;
-  };
-
-  return [...groups.entries()].map(([key, members]) => {
-    const isFamily = key.startsWith('family:');
-    const surname = key.replace('family:', '');
-    const recipientName = isFamily
-      ? `Familia ${surname[0].toUpperCase()}${surname.slice(1)}`
-      : members[0].name;
-    const sourceLabel = colorLabels[members[0].color] ?? 'Lista de Larissa';
-    const slug = takeSlug(`${slugify(recipientName)}-${randomUUID().slice(0, 6)}`);
-
+  const columns = [
+    { name: 1, gender: 2, letter: 'B', source: 'Invitados Larissa' },
+    { name: 9, gender: 10, letter: 'J', source: 'Invitados Luis' },
+  ];
+  const entries = rows.flatMap((row, index) => columns.map((column) => {
+    const cell = sheet[`${column.letter}${index + 1}`];
     return {
-      id: randomUUID(),
-      slug,
-      recipientName,
-      householdName: isFamily ? recipientName : null,
-      maxGuests: members.length,
-      sourceLabel,
-      members,
+      name: typeof row[column.name] === 'string' ? row[column.name] : '',
+      gender: typeof row[column.gender] === 'string' ? row[column.gender] : null,
+      color: cell?.s?.fgColor?.rgb ?? null,
+      source: column.source,
     };
-  });
+  }));
+
+  return buildImportedInvitations(entries).map((invitation) => ({
+    ...invitation,
+    id: randomUUID(),
+    slug: `${slugify(invitation.recipientName)}-${createHash('sha256')
+      .update(invitation.importKey)
+      .digest('hex')
+      .slice(0, 6)}`,
+  }));
 }
 
 const invitations = readWorkbookRoster(sourceFile);
@@ -140,12 +90,12 @@ const sql = neon(databaseUrl);
 for (const invitation of invitations) {
   const current = await sql`
     INSERT INTO invitations (
-      id, slug, recipient_name, household_name, max_guests, source_label
+      id, import_key, slug, recipient_name, household_name, max_guests, source_label
     ) VALUES (
-      ${invitation.id}, ${invitation.slug}, ${invitation.recipientName},
+      ${invitation.id}, ${invitation.importKey}, ${invitation.slug}, ${invitation.recipientName},
       ${invitation.householdName}, ${invitation.maxGuests}, ${invitation.sourceLabel}
     )
-    ON CONFLICT (slug) DO UPDATE SET
+    ON CONFLICT (import_key) DO UPDATE SET
       recipient_name = EXCLUDED.recipient_name,
       household_name = EXCLUDED.household_name,
       max_guests = EXCLUDED.max_guests,

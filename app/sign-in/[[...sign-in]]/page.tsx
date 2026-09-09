@@ -1,14 +1,16 @@
 'use client';
 
-import { SignIn } from '@clerk/nextjs';
-import { AppClerkProvider } from '@/components/clerk-provider';
+import dynamic from 'next/dynamic';
+
+const BrowserSignIn = dynamic(
+  () => import('@/components/clerk-auth-screens').then((module) => module.BrowserSignIn),
+  { ssr: false },
+);
 
 export default function SignInPage() {
   return (
     <main className="paper-texture grid min-h-screen place-items-center px-5 py-10">
-      <AppClerkProvider>
-        <SignIn />
-      </AppClerkProvider>
+      <BrowserSignIn />
     </main>
   );
 }

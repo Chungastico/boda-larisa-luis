@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS invitations (
   id TEXT PRIMARY KEY,
   slug TEXT NOT NULL UNIQUE,
+  import_key TEXT UNIQUE,
   recipient_name TEXT NOT NULL,
   household_name TEXT,
   max_guests INTEGER NOT NULL DEFAULT 1 CHECK (max_guests > 0),
@@ -12,6 +13,10 @@ CREATE TABLE IF NOT EXISTS invitations (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS import_key TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS invitations_import_key_idx ON invitations(import_key)
+  WHERE import_key IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS invitees (
   id TEXT PRIMARY KEY,

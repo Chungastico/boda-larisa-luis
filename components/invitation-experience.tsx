@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Heart, Minus, Plus, X } from 'lucide-react';
+import { Check, Heart, Minus, Plus } from 'lucide-react';
 import gsap from 'gsap';
 import type { Invitation, RsvpStatus } from '@/lib/invitations';
 

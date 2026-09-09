@@ -1,16 +1,12 @@
 'use client';
 
-import { ClerkProvider } from '@clerk/nextjs';
-import { shadcn } from '@clerk/ui/themes';
+import dynamic from 'next/dynamic';
+
+const BrowserClerkProvider = dynamic(
+  () => import('@/components/clerk-provider-browser').then((module) => module.BrowserClerkProvider),
+  { ssr: false },
+);
 
 export function AppClerkProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider
-      appearance={{ theme: shadcn }}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-    >
-      {children}
-    </ClerkProvider>
-  );
+  return <BrowserClerkProvider>{children}</BrowserClerkProvider>;
 }
