@@ -23,7 +23,6 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,17 +48,8 @@ const statusMeta: Record<RsvpStatus, { label: string; className: string; dot: st
   DECLINED: { label: 'No asistirá', className: 'border-[#d7a89f] bg-[#f6e3df] text-[#8b453b]', dot: 'bg-[#b66456]' },
 };
 
-const clusterColors = [
-  { value: 'FFFF00', label: 'Amarillo' },
-  { value: 'FF99CC', label: 'Rosa' },
-  { value: 'FFCC00', label: 'Dorado' },
-  { value: '99CC00', label: 'Verde' },
-  { value: '99CCFF', label: 'Celeste' },
-  { value: 'CC99FF', label: 'Lila' },
-  { value: 'FF0000', label: 'Rojo' },
-];
-
 type SentFilter = 'ALL' | 'SENT' | 'NOT_SENT';
+type SourceFilter = 'ALL' | 'LARISSA' | 'LUIS';
 type EditorState = Invitation | 'NEW' | null;
 
 function StatusPill({ status }: { status: RsvpStatus }) {
@@ -75,10 +65,6 @@ function StatusPill({ status }: { status: RsvpStatus }) {
 function formatResponseDate(value: string | null) {
   if (!value) return 'Sin respuesta';
   return new Intl.DateTimeFormat('es-SV', { day: 'numeric', month: 'short' }).format(new Date(value));
-}
-
-function safeColor(color: string | null) {
-  return color && /^[\dA-F]{6}$/i.test(color) ? '#' + color : '#c9c0af';
 }
 
 function sourceName(source: string | null) {
@@ -160,10 +146,7 @@ function FamilyEditor({
   onSaved: (invitation: Invitation) => void;
 }) {
   const [recipientName, setRecipientName] = useState(family?.recipientName ?? '');
-  const [householdName, setHouseholdName] = useState(family?.householdName ?? '');
   const [sourceLabel, setSourceLabel] = useState(family?.sourceLabel ?? 'Invitados Larissa');
-  const [clusterLabel, setClusterLabel] = useState(family?.clusterLabel ?? '');
-  const [clusterColor, setClusterColor] = useState(family?.clusterColor ?? '');
   const [tableName, setTableName] = useState(family?.tableName ?? '');
   const [maxGuests, setMaxGuests] = useState(family?.maxGuests ?? 1);
   const [status, setStatus] = useState<RsvpStatus>(family?.status ?? 'PENDING');
@@ -188,10 +171,10 @@ function FamilyEditor({
     setError('');
     const body: FamilyInput = {
       recipientName,
-      householdName: householdName || null,
+      householdName: recipientName || null,
       sourceLabel: sourceLabel || null,
-      clusterLabel: clusterLabel || null,
-      clusterColor: clusterColor || null,
+      clusterLabel: null,
+      clusterColor: null,
       tableName: tableName || null,
       maxGuests: Number(maxGuests),
       status,
@@ -220,7 +203,7 @@ function FamilyEditor({
       <DialogContent className="max-h-[calc(100vh-1.5rem)] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-none border-[#d8d0bf] bg-[#fffaf0] p-6 sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">{family ? 'Editar familia' : 'Agregar familia'}</DialogTitle>
-          <DialogDescription>Cada registro reúne a una familia, su origen, integrantes y asignación de mesa.</DialogDescription>
+          <DialogDescription>Una familia se gestiona como un solo registro. Su mesa organiza automáticamente su grupo visual.</DialogDescription>
         </DialogHeader>
         <form onSubmit={(event) => { event.preventDefault(); void save(); }} className="mt-2 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -228,13 +211,6 @@ function FamilyEditor({
               <span className="mb-1.5 block text-[#5c614d]">Nombre visible de la familia</span>
               <Input id="recipient-name" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} placeholder="Familia Vides" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
             </label>
-            <label htmlFor="household-name" className="block text-sm">
-              <span className="mb-1.5 block text-[#5c614d]">Familia o grupo</span>
-              <Input id="household-name" value={householdName} onChange={(event) => setHouseholdName(event.target.value)} placeholder="Opcional" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
-            </label>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
             <label htmlFor="guest-source" className="block text-sm">
               <span className="mb-1.5 block text-[#5c614d]">Origen de los invitados</span>
               <select id="guest-source" value={sourceLabel} onChange={(event) => setSourceLabel(event.target.value)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
@@ -249,20 +225,6 @@ function FamilyEditor({
               <select id="table-name" value={tableName} onChange={(event) => setTableName(event.target.value)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
                 <option value="">Sin asignar</option>
                 {seatingTables.map((table) => <option key={table.name} value={table.name}>{table.name}</option>)}
-              </select>
-            </label>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label htmlFor="cluster-label" className="block text-sm">
-              <span className="mb-1.5 block text-[#5c614d]">Clúster familiar</span>
-              <Input id="cluster-label" value={clusterLabel} onChange={(event) => setClusterLabel(event.target.value)} placeholder="Ej. Grupo dorado" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
-            </label>
-            <label htmlFor="cluster-color" className="block text-sm">
-              <span className="mb-1.5 block text-[#5c614d]">Color del clúster</span>
-              <select id="cluster-color" value={clusterColor} onChange={(event) => setClusterColor(event.target.value)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
-                <option value="">Sin color</option>
-                {clusterColors.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}
               </select>
             </label>
           </div>
@@ -313,11 +275,11 @@ function FamilyEditor({
   );
 }
 
-type Seat = { id: string; name: string; familyName: string; source: string | null; color: string | null };
+type Seat = { id: string; name: string; familyName: string; source: string | null; color: string };
 
 function SeatCard({ seat, order }: { seat: Seat; order: number }) {
   return (
-    <div className="min-w-0 border border-[#d8d0bf] border-l-[3px] bg-[#fffaf0] px-2.5 py-2" style={{ borderLeftColor: safeColor(seat.color) }}>
+    <div className="min-w-0 border border-[#d8d0bf] border-l-[3px] bg-[#fffaf0] px-2.5 py-2" style={{ borderLeftColor: seat.color }}>
       <p className="truncate text-xs font-semibold text-[#313624]">{String(order) + '. ' + seat.name}</p>
       <p className="truncate pt-0.5 text-[11px] text-[#6e735f]">{seat.familyName + ' · ' + sourceName(seat.source)}</p>
     </div>
@@ -330,8 +292,19 @@ function SeatingMap({ table, families }: { table: SeatingTable; families: Invita
     name: member.name,
     familyName: family.recipientName,
     source: family.sourceLabel,
-    color: family.clusterColor,
+    color: table.color,
   })));
+  const guests = families.flatMap((family) => family.invitees);
+  const women = guests.filter((guest) => guest.gender === 'F').length;
+  const men = guests.filter((guest) => guest.gender === 'M').length;
+  const unspecifiedGender = guests.length - women - men;
+  const womenPercentage = seats.length ? Math.round((women / seats.length) * 100) : 0;
+  const menPercentage = seats.length ? Math.round((men / seats.length) * 100) : 0;
+  const sourceBreakdown = Array.from(seats.reduce((totals, seat) => {
+    const source = sourceName(seat.source);
+    totals.set(source, (totals.get(source) ?? 0) + 1);
+    return totals;
+  }, new Map<string, number>()).entries());
   const topCount = Math.min(4, Math.ceil(seats.length / 3));
   const sideCount = Math.min(2, Math.floor((seats.length - topCount) / 3));
   const top = seats.slice(0, topCount);
@@ -345,16 +318,56 @@ function SeatingMap({ table, families }: { table: SeatingTable; families: Invita
 
   return (
     <section className="border border-[#d8d0bf] bg-[#f8f4eb] p-4 sm:p-6">
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#6e735f]">Distribución visual</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6e735f]">Mesa seleccionada</p>
           <h2 className="font-display mt-1 text-2xl">{table.name}</h2>
         </div>
         <p className={'text-sm font-medium ' + (available < 0 ? 'text-[#a54e43]' : 'text-[#527145]')}>{availability}</p>
       </div>
 
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+        <div className="border border-[#d8d0bf] bg-[#fffaf0] p-3">
+          <p className="text-xs uppercase text-[#6e735f]">Asignados</p>
+          <p className="font-display mt-1 text-2xl">{String(seats.length) + ' / ' + String(table.capacity)}</p>
+        </div>
+        <div className="border border-[#d8d0bf] bg-[#fffaf0] p-3">
+          <p className="text-xs uppercase text-[#6e735f]">{available < 0 ? 'Reubicar' : 'Disponibles'}</p>
+          <p className={'font-display mt-1 text-2xl ' + (available < 0 ? 'text-[#a54e43]' : 'text-[#527145]')}>{Math.abs(available)}</p>
+        </div>
+        <div className="border border-[#d8d0bf] bg-[#fffaf0] p-3">
+          <p className="text-xs uppercase text-[#6e735f]">Mujeres</p>
+          <p className="font-display mt-1 text-2xl text-[#805a76]">{String(women) + ' · ' + String(womenPercentage) + '%'}</p>
+        </div>
+        <div className="border border-[#d8d0bf] bg-[#fffaf0] p-3">
+          <p className="text-xs uppercase text-[#6e735f]">Hombres</p>
+          <p className="font-display mt-1 text-2xl text-[#45687d]">{String(men) + ' · ' + String(menPercentage) + '%'}</p>
+        </div>
+        <div className="border border-[#d8d0bf] bg-[#fffaf0] p-3">
+          <p className="text-xs uppercase text-[#6e735f]">Sin especificar</p>
+          <p className="font-display mt-1 text-2xl">{unspecifiedGender}</p>
+        </div>
+      </div>
+
+      <section className="mt-5 border border-[#d8d0bf] bg-[#fffaf0] p-4">
+        <h3 className="font-medium text-[#313624]">Origen de invitados</h3>
+        {sourceBreakdown.length ? (
+          <ul className="mt-3 space-y-3">
+            {sourceBreakdown.map(([source, count]) => (
+              <li key={source}>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#4c513d]">{source}</span>
+                  <span className="font-medium text-[#313624]">{String(count) + ' personas'}</span>
+                </div>
+                <div className="mt-1.5 h-1.5 bg-[#e2dbce]"><div className="h-full" style={{ width: String(Math.round((count / seats.length) * 100)) + '%', backgroundColor: table.color }} /></div>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="mt-2 text-sm text-[#6e735f]">Sin invitados asignados.</p>}
+      </section>
+
       {seats.length ? (
-        <div className="mx-auto max-w-4xl space-y-3">
+        <div className="mx-auto mt-6 max-w-4xl space-y-3">
           <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
             {top.map((seat, index) => <SeatCard key={seat.id} seat={seat} order={index + 1} />)}
           </div>
@@ -384,11 +397,35 @@ function SeatingMap({ table, families }: { table: SeatingTable; families: Invita
   );
 }
 
+function InvitationActions({
+  invitation,
+  copied,
+  onCopy,
+  onEdit,
+  onDelete,
+}: {
+  invitation: Invitation;
+  copied: boolean;
+  onCopy: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap justify-end gap-1">
+      <Button variant="ghost" size="icon-sm" title={copied ? 'Enlace copiado' : 'Copiar enlace'} className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label={copied ? 'Enlace copiado' : 'Copiar enlace de invitación'} onClick={onCopy}><Clipboard size={16} /></Button>
+      <a href={'/i/' + invitation.slug} target="_blank" rel="noreferrer" title="Abrir invitación" aria-label="Abrir invitación" className="inline-flex size-7 items-center justify-center text-[#5c614d] hover:bg-[#ece6da]"><ExternalLink size={16} /></a>
+      <Button variant="ghost" size="icon-sm" title="Editar familia" className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label="Editar familia" onClick={onEdit}><Pencil size={16} /></Button>
+      <Button variant="ghost" size="icon-sm" title="Eliminar familia" className="rounded-none text-[#a54e43] hover:bg-[#f6e3df]" aria-label="Eliminar familia" onClick={onDelete}><Trash2 size={16} /></Button>
+    </div>
+  );
+}
+
 export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitations: Invitation[]; isDemo: boolean }) {
   const [invitations, setInvitations] = useState(initialInvitations);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<RsvpStatus | 'ALL'>('ALL');
   const [sentFilter, setSentFilter] = useState<SentFilter>('ALL');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('ALL');
   const [activeView, setActiveView] = useState<'families' | 'tables'>('families');
   const [editing, setEditing] = useState<EditorState>(null);
   const [deleteTarget, setDeleteTarget] = useState<Invitation | null>(null);
@@ -402,6 +439,9 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
 
   const metrics = useMemo(() => {
     const accepted = invitations.filter((item) => item.status === 'ACCEPTED');
+    const guests = invitations.flatMap((item) => item.invitees);
+    const women = guests.filter((guest) => guest.gender === 'F').length;
+    const men = guests.filter((guest) => guest.gender === 'M').length;
     return {
       invitations: invitations.length,
       people: invitations.reduce((sum, item) => sum + item.maxGuests, 0),
@@ -409,6 +449,9 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
       pending: invitations.filter((item) => item.status === 'PENDING').length,
       sent: invitations.filter((item) => item.invitationSent).length,
       declined: invitations.filter((item) => item.status === 'DECLINED').length,
+      women,
+      men,
+      unspecifiedGender: guests.length - women - men,
     };
   }, [invitations]);
 
@@ -420,18 +463,21 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
         const matchesSent = sentFilter === 'ALL'
           || (sentFilter === 'SENT' && invitation.invitationSent)
           || (sentFilter === 'NOT_SENT' && !invitation.invitationSent);
+        const source = sourceName(invitation.sourceLabel);
+        const matchesSource = sourceFilter === 'ALL'
+          || sourceFilter === 'LARISSA' && (source === 'Larissa' || invitation.sourceLabel === 'Ambos')
+          || sourceFilter === 'LUIS' && (source === 'Luis' || invitation.sourceLabel === 'Ambos');
         const haystack = [
           invitation.recipientName,
           invitation.householdName,
           invitation.sourceLabel,
-          invitation.clusterLabel,
           invitation.tableName,
           ...invitation.invitees.map((member) => member.name),
         ].filter(Boolean).join(' ').toLocaleLowerCase('es');
-        return matchesStatus && matchesSent && (!normalized || haystack.includes(normalized));
+        return matchesStatus && matchesSent && matchesSource && (!normalized || haystack.includes(normalized));
       })
       .sort((left, right) => left.recipientName.localeCompare(right.recipientName, 'es'));
-  }, [invitations, query, sentFilter, statusFilter]);
+  }, [invitations, query, sentFilter, sourceFilter, statusFilter]);
 
   const tableSummaries = useMemo(() => seatingTables.map((table) => {
     const families = invitations.filter((invitation) => invitation.tableName === table.name);
@@ -530,13 +576,16 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
     ['Pendientes', metrics.pending, 'text-[#9a7723]'],
     ['Enviadas', metrics.sent, 'text-[#527145]'],
     ['No asistirán', metrics.declined, 'text-[#9a5148]'],
+    ['Mujeres', metrics.women, 'text-[#805a76]'],
+    ['Hombres', metrics.men, 'text-[#45687d]'],
+    ['Sin especificar', metrics.unspecifiedGender, ''],
   ] as const;
 
   return (
-    <TooltipProvider>
+    <>
       <main className="min-h-screen bg-[#f4eee2] text-[#313624]">
         <header className="border-b border-[#d8d0bf] bg-[#fffaf0]">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+          <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8">
             <Link href="/admin" className="font-display text-2xl leading-none">Larissa &amp; Luis</Link>
             <div className="flex items-center gap-2">
               {isDemo && <span className="hidden border border-[#d6c68b] bg-[#faf2d7] px-2 py-1 text-xs text-[#775f1d] sm:block">Muestra</span>}
@@ -545,7 +594,7 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
           </div>
         </header>
 
-        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
+        <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 sm:py-10">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs uppercase text-[#6e735f]">Boda / 04.10.2026</p>
@@ -584,9 +633,9 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
             </div>
           )}
 
-          <section className="mt-8 grid grid-cols-2 border-y border-[#d8d0bf] sm:grid-cols-3 lg:grid-cols-6">
-            {metricsList.map(([label, value, color], index) => (
-              <div key={label} className={'border-[#d8d0bf] px-4 py-5 ' + (index % 2 === 0 ? 'border-r sm:border-r ' : '') + (index < 4 ? 'border-b sm:border-b ' : 'sm:border-b ') + 'lg:border-b-0 lg:border-r lg:last:border-r-0'}>
+          <section className="mt-8 grid grid-cols-2 gap-px border-y border-[#d8d0bf] bg-[#d8d0bf] sm:grid-cols-3 xl:grid-cols-9">
+            {metricsList.map(([label, value, color]) => (
+              <div key={label} className="bg-[#f4eee2] px-4 py-5">
                 <p className="text-xs uppercase text-[#6e735f]">{label}</p>
                 <p className={'font-display mt-2 text-3xl leading-none ' + color}>{value}</p>
               </div>
@@ -602,19 +651,19 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
             <TabsContent value="families">
               <section>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="relative max-w-md flex-1">
+                  <div className="relative max-w-xl flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#78805e]" size={17} />
-                    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar invitado, familia, clúster o mesa" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0] pl-10" />
+                    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar familia, integrante o mesa" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0] pl-10" />
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    <div className="flex overflow-x-auto border border-[#c9c0af] bg-[#fffaf0]">
+                    <div className="flex flex-wrap border border-[#c9c0af] bg-[#fffaf0]">
                       {statusOptions.map((option) => (
                         <button key={option.value} type="button" onClick={() => setStatusFilter(option.value)} className={statusFilter === option.value ? 'h-9 shrink-0 border-r border-[#c9c0af] bg-[#424934] px-3 text-sm text-[#fffaf0] last:border-r-0' : 'h-9 shrink-0 border-r border-[#c9c0af] px-3 text-sm text-[#5c614d] hover:bg-[#ece6da] last:border-r-0'}>
                           {option.label}
                         </button>
                       ))}
                     </div>
-                    <div className="flex overflow-x-auto border border-[#c9c0af] bg-[#fffaf0]">
+                    <div className="flex flex-wrap border border-[#c9c0af] bg-[#fffaf0]">
                       {([
                         ['ALL', 'Todas'],
                         ['SENT', 'Enviadas'],
@@ -625,71 +674,57 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
                         </button>
                       ))}
                     </div>
+                    <div className="flex flex-wrap border border-[#c9c0af] bg-[#fffaf0]">
+                      {([
+                        ['ALL', 'Todas'],
+                        ['LARISSA', 'Larissa'],
+                        ['LUIS', 'Luis'],
+                      ] as Array<[SourceFilter, string]>).map(([value, label]) => (
+                        <button key={value} type="button" onClick={() => setSourceFilter(value)} className={sourceFilter === value ? 'h-9 shrink-0 border-r border-[#c9c0af] bg-[#655a45] px-3 text-sm text-[#fffaf0] last:border-r-0' : 'h-9 shrink-0 border-r border-[#c9c0af] px-3 text-sm text-[#5c614d] hover:bg-[#ece6da] last:border-r-0'}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-5 overflow-x-auto border border-[#d8d0bf] bg-[#fffaf0]">
-                  <Table className="min-w-[920px]">
+                <div className="mt-5 hidden border border-[#d8d0bf] bg-[#fffaf0] lg:block">
+                  <Table className="w-full table-fixed">
                     <TableHeader className="bg-[#ece6da]/60">
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Familia</TableHead>
-                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Origen y clúster</TableHead>
-                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Mesa</TableHead>
-                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Cupo</TableHead>
-                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Enviada</TableHead>
-                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Respuesta</TableHead>
-                        <TableHead className="h-11 px-4"><span className="sr-only">Acciones</span></TableHead>
+                        <TableHead className="h-11 w-[30%] px-4 text-xs font-semibold uppercase text-[#6e735f]">Familia</TableHead>
+                        <TableHead className="h-11 w-[11%] px-3 text-xs font-semibold uppercase text-[#6e735f]">Origen</TableHead>
+                        <TableHead className="h-11 w-[12%] px-3 text-xs font-semibold uppercase text-[#6e735f]">Mesa</TableHead>
+                        <TableHead className="h-11 w-[9%] px-3 text-xs font-semibold uppercase text-[#6e735f]">Cupo</TableHead>
+                        <TableHead className="h-11 w-[12%] px-3 text-xs font-semibold uppercase text-[#6e735f]">Enviada</TableHead>
+                        <TableHead className="h-11 w-[14%] px-3 text-xs font-semibold uppercase text-[#6e735f]">Respuesta</TableHead>
+                        <TableHead className="h-11 w-[12%] px-3"><span className="sr-only">Acciones</span></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredInvitations.length ? filteredInvitations.map((invitation) => (
                         <TableRow key={invitation.id} className="hover:bg-[#f8f4eb]">
                           <TableCell className="px-4 py-3">
-                            <div className="min-w-48">
+                            <div className="min-w-0">
                               <p className="font-medium text-[#313624]">{invitation.recipientName}</p>
-                              <p className="mt-0.5 max-w-xs truncate text-xs text-[#6e735f]">{invitation.invitees.map((member) => member.name).join(', ') || 'Sin integrantes'}</p>
+                              <p className="mt-0.5 break-words text-xs leading-5 text-[#6e735f]">{invitation.invitees.map((member) => member.name).join(', ') || 'Sin integrantes'}</p>
                             </div>
                           </TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex min-w-36 flex-col gap-1">
-                              <span className="text-sm text-[#4c513d]">{invitation.sourceLabel ?? 'Sin origen'}</span>
-                              <span className="inline-flex items-center gap-1.5 text-xs text-[#6e735f]">
-                                <span className="size-2 rounded-full border border-black/10" style={{ backgroundColor: safeColor(invitation.clusterColor) }} />
-                                {invitation.clusterLabel ?? 'Sin clúster'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-[#5c614d]">{invitation.tableName ?? 'Sin asignar'}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-[#5c614d]">{String(invitation.attendingCount) + ' / ' + String(invitation.maxGuests)}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <label className="flex min-w-28 items-center gap-2 text-sm text-[#5c614d]">
+                          <TableCell className="break-words px-3 py-3 text-sm text-[#4c513d]">{sourceName(invitation.sourceLabel)}</TableCell>
+                          <TableCell className="break-words px-3 py-3 text-sm text-[#5c614d]">{invitation.tableName ?? 'Sin asignar'}</TableCell>
+                          <TableCell className="px-3 py-3 text-sm text-[#5c614d]">{String(invitation.attendingCount) + ' / ' + String(invitation.maxGuests)}</TableCell>
+                          <TableCell className="px-3 py-3">
+                            <label className="flex items-center gap-2 text-sm text-[#5c614d]">
                               <Switch size="sm" checked={invitation.invitationSent} disabled={savingId === invitation.id} onCheckedChange={(checked) => void toggleInvitationSent(invitation, checked)} aria-label={'Invitación enviada a ' + invitation.recipientName} />
                               {invitation.invitationSent ? 'Sí' : 'No'}
                             </label>
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-3">
                             <StatusPill status={invitation.status} />
                             <p className="mt-1 text-xs text-[#6e735f]">{formatResponseDate(invitation.respondedAt)}</p>
                           </TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex justify-end gap-1">
-                              <Tooltip>
-                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label="Copiar enlace de invitación" onClick={() => void copyLink(invitation)}><Clipboard size={16} /></Button>} />
-                                <TooltipContent>{copiedId === invitation.id ? 'Enlace copiado' : 'Copiar enlace'}</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger render={<a href={'/i/' + invitation.slug} target="_blank" rel="noreferrer" aria-label="Abrir invitación" className="inline-flex size-7 items-center justify-center text-[#5c614d] hover:bg-[#ece6da]"><ExternalLink size={16} /></a>} />
-                                <TooltipContent>Abrir invitación</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label="Editar familia" onClick={() => setEditing(invitation)}><Pencil size={16} /></Button>} />
-                                <TooltipContent>Editar familia</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-none text-[#a54e43] hover:bg-[#f6e3df]" aria-label="Eliminar familia" onClick={() => setDeleteTarget(invitation)}><Trash2 size={16} /></Button>} />
-                                <TooltipContent>Eliminar familia</TooltipContent>
-                              </Tooltip>
-                            </div>
+                          <TableCell className="px-3 py-3">
+                            <InvitationActions invitation={invitation} copied={copiedId === invitation.id} onCopy={() => void copyLink(invitation)} onEdit={() => setEditing(invitation)} onDelete={() => setDeleteTarget(invitation)} />
                           </TableCell>
                         </TableRow>
                       )) : (
@@ -698,31 +733,60 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
                     </TableBody>
                   </Table>
                 </div>
+                <div className="mt-5 grid gap-3 lg:hidden">
+                  {filteredInvitations.length ? filteredInvitations.map((invitation) => (
+                    <article key={invitation.id} className="border border-[#d8d0bf] bg-[#fffaf0] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="font-medium text-[#313624]">{invitation.recipientName}</h2>
+                          <p className="mt-1 break-words text-xs leading-5 text-[#6e735f]">{invitation.invitees.map((member) => member.name).join(', ') || 'Sin integrantes'}</p>
+                        </div>
+                        <StatusPill status={invitation.status} />
+                      </div>
+                      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-[#e2dbce] py-3 text-sm">
+                        <div><dt className="text-xs uppercase text-[#6e735f]">Origen</dt><dd className="mt-1 text-[#4c513d]">{sourceName(invitation.sourceLabel)}</dd></div>
+                        <div><dt className="text-xs uppercase text-[#6e735f]">Mesa</dt><dd className="mt-1 text-[#4c513d]">{invitation.tableName ?? 'Sin asignar'}</dd></div>
+                        <div><dt className="text-xs uppercase text-[#6e735f]">Cupo</dt><dd className="mt-1 text-[#4c513d]">{String(invitation.attendingCount) + ' / ' + String(invitation.maxGuests)}</dd></div>
+                        <div><dt className="text-xs uppercase text-[#6e735f]">Respuesta</dt><dd className="mt-1 text-[#4c513d]">{formatResponseDate(invitation.respondedAt)}</dd></div>
+                      </dl>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 text-sm text-[#5c614d]">
+                          <Switch size="sm" checked={invitation.invitationSent} disabled={savingId === invitation.id} onCheckedChange={(checked) => void toggleInvitationSent(invitation, checked)} aria-label={'Invitación enviada a ' + invitation.recipientName} />
+                          Invitación {invitation.invitationSent ? 'enviada' : 'sin enviar'}
+                        </label>
+                        <InvitationActions invitation={invitation} copied={copiedId === invitation.id} onCopy={() => void copyLink(invitation)} onEdit={() => setEditing(invitation)} onDelete={() => setDeleteTarget(invitation)} />
+                      </div>
+                    </article>
+                  )) : (
+                    <div className="grid h-32 place-items-center border border-[#d8d0bf] bg-[#fffaf0] text-center text-sm text-[#6e735f]">No hay familias que coincidan con los filtros.</div>
+                  )}
+                </div>
                 <div className="mt-6 flex items-center gap-2 text-sm text-[#6e735f]"><Users size={17} className="text-[#78805e]" /><span>{String(filteredInvitations.length) + ' familias visibles'}</span></div>
               </section>
             </TabsContent>
 
             <TabsContent value="tables">
               <section>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                   {tableSummaries.map((summary) => {
-                    const isSelected = summary.table.name === selectedTable;
-                    const usage = Math.min(100, Math.max(0, (summary.occupied / summary.table.capacity) * 100));
-                    const availableText = summary.available < 0 ? '+' + String(Math.abs(summary.available)) : String(summary.available) + (summary.available === 1 ? ' libre' : ' libres');
+                    const selected = summary.table.name === currentTable?.table.name;
                     return (
-                      <button key={summary.table.name} type="button" onClick={() => setSelectedTable(summary.table.name)} className={isSelected ? 'border border-[#424934] bg-[#fffaf0] p-4 text-left ring-1 ring-[#424934]' : 'border border-[#d8d0bf] bg-[#f8f4eb] p-4 text-left hover:bg-[#fffaf0]'}>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="font-medium text-[#313624]">{summary.table.name}</span>
-                          <span className={'text-xs font-medium ' + (summary.available < 0 ? 'text-[#a54e43]' : 'text-[#527145]')}>{availableText}</span>
-                        </div>
-                        <p className="mt-2 text-sm text-[#5c614d]">{String(summary.occupied) + ' / ' + String(summary.table.capacity) + ' asignados'}</p>
-                        <div className="mt-3 h-1.5 overflow-hidden bg-[#e2dbce]"><div className="h-full" style={{ width: String(usage) + '%', backgroundColor: summary.table.color }} /></div>
+                      <button
+                        key={summary.table.name}
+                        type="button"
+                        aria-pressed={selected}
+                        aria-label={'Ver detalle de ' + summary.table.name}
+                        onClick={() => setSelectedTable(summary.table.name)}
+                        className={'border border-[#d8d0bf] bg-[#fffaf0] px-4 py-3 text-left text-sm font-medium text-[#313624] transition-colors hover:bg-[#ece6da] ' + (selected ? 'ring-1 ring-[#424934]' : '')}
+                        style={{ borderLeftColor: summary.table.color, borderLeftWidth: '4px' }}
+                      >
+                        {summary.table.name}
                       </button>
                     );
                   })}
                 </div>
 
-                {currentTable && <div className="mt-6"><SeatingMap table={currentTable.table} families={currentTable.families} /></div>}
+                {currentTable && <div className="mt-5"><SeatingMap table={currentTable.table} families={currentTable.families} /></div>}
 
                 {unassignedFamilies.length > 0 && (
                   <section className="mt-6 border border-dashed border-[#c9c0af] bg-[#fffaf0] p-4">
@@ -755,6 +819,6 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </TooltipProvider>
+    </>
   );
 }

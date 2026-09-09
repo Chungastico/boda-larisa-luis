@@ -7,14 +7,37 @@ import type { Invitation, RsvpAttendeeInput, RsvpStatus } from '@/lib/invitation
 
 const weddingDate = new Date('2026-10-04T16:00:00-06:00');
 
-const galleryPhotos = [
+type GalleryPhoto = {
+  src: string;
+  alt: string;
+  frame: 'diagonal-bottom' | 'diagonal-top' | 'arch-bottom' | 'arch-top';
+};
+
+const galleryPhotos: readonly GalleryPhoto[] = [
   { src: '/figma/photos/labios-rojos.png', alt: 'Larissa y Luis en la naturaleza', frame: 'diagonal-bottom' },
   { src: '/figma/photos/puerta-del-diablo.png', alt: 'Larissa y Luis en la Puerta del Diablo', frame: 'arch-top' },
-  { src: '/figma/photos/playa-negro.png', alt: 'Larissa y Luis en la playa', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/playa-negro.png', alt: 'Larissa y Luis en la playa al atardecer', frame: 'arch-bottom' },
   { src: '/figma/photos/lago-celeste.png', alt: 'Larissa y Luis junto al lago', frame: 'diagonal-top' },
-  { src: '/figma/photos/playa-oscuro.png', alt: 'Larissa y Luis en la playa al atardecer', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/playa-oscuro.png', alt: 'Larissa y Luis en la playa', frame: 'diagonal-bottom' },
   { src: '/figma/photos/calles-de-piedra.png', alt: 'Larissa y Luis en calles de piedra', frame: 'arch-top' },
-] as const;
+];
+
+function randomGalleryOrder(previous: readonly GalleryPhoto[]) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const next = [...previous];
+
+    for (let index = next.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [next[index], next[randomIndex]] = [next[randomIndex], next[index]];
+    }
+
+    if (next.every((photo, index) => photo.src !== previous[index]?.src)) {
+      return next;
+    }
+  }
+
+  return [...previous.slice(1), previous[0]!];
+}
 
 type FamilyRsvpMode = 'all' | 'partial' | 'declined';
 
@@ -104,8 +127,9 @@ export function InvitationExperience({
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLImageElement>(null);
-  const gallerySectionRef = useRef<HTMLElement>(null);
   const galleryCardsRef = useRef<(HTMLElement | null)[]>([]);
+  const hasRenderedGalleryRef = useRef(false);
+  const [visibleGalleryPhotos, setVisibleGalleryPhotos] = useState(() => [...galleryPhotos]);
   const isFamilyInvitation = invitation.invitees.length > 1 || invitation.maxGuests > 1;
   const [decision, setDecision] = useState<RsvpStatus | null>(
     invitation.status === 'PENDING' ? null : invitation.status,
@@ -190,33 +214,53 @@ export function InvitationExperience({
   }, []);
 
   useEffect(() => {
-    const section = gallerySectionRef.current;
-    if (!section || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cards = galleryCardsRef.current.filter((card): card is HTMLElement => Boolean(card));
+    if (!hasRenderedGalleryRef.current) {
+      hasRenderedGalleryRef.current = true;
+      return;
+    }
+
+    const timeline = gsap.fromTo(
+      cards,
+      { autoAlpha: 0, scale: 0.975 },
+      {
+        autoAlpha: 1,
+        scale: 1,
+        duration: 0.7,
+        ease: 'power3.out',
+        stagger: { each: 0.075, from: 'random' },
+      },
+    );
+
+    return () => {
+      timeline.kill();
+    };
+  }, [visibleGalleryPhotos]);
+
+  const refreshGallery = useCallback(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const cards = galleryCardsRef.current.filter((card): card is HTMLElement => Boolean(card));
-    const motions = [
-      { x: 4, y: -8, rotation: -0.6 },
-      { x: -4, y: 7, rotation: 0.7 },
-      { x: 3, y: -6, rotation: 0.5 },
-      { x: -3, y: 8, rotation: -0.7 },
-      { x: -4, y: -7, rotation: 0.6 },
-      { x: 4, y: 6, rotation: -0.5 },
-    ];
-    const context = gsap.context(() => {
-      cards.forEach((card, index) => {
-        gsap.to(card, {
-          ...motions[index],
-          delay: index * 0.18,
-          duration: 5.2 + index * 0.35,
-          ease: 'sine.inOut',
-          repeat: -1,
-          yoyo: true,
-        });
-      });
-    }, section);
+    if (!cards.length) return;
 
-    return () => context.revert();
+    gsap.killTweensOf(cards);
+    gsap.to(cards, {
+      autoAlpha: 0,
+      scale: 0.975,
+      duration: 0.32,
+      ease: 'power2.in',
+      stagger: { each: 0.055, from: 'random' },
+      onComplete: () => setVisibleGalleryPhotos((photos) => randomGalleryOrder(photos)),
+    });
   }, []);
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const rotation = window.setInterval(refreshGallery, 7_500);
+
+    return () => window.clearInterval(rotation);
+  }, [refreshGallery]);
 
   useEffect(() => {
     const context = (document as Document & { modelContext?: WebMcpContext }).modelContext;
@@ -376,12 +420,12 @@ export function InvitationExperience({
   }
 
   return (
-    <main className="h-[100svh] overflow-hidden bg-[#24291e] md:p-5">
+    <main className="invitation-shell h-[100dvh] overflow-hidden bg-[#24291e] md:p-5">
       <div
         ref={pageRef}
         className="invitation-scroller mx-auto h-full max-w-[480px] overflow-y-auto bg-[#f4eee2] shadow-2xl"
       >
-        <nav className="sticky top-0 z-50 grid h-[58px] grid-cols-[34px_repeat(5,minmax(0,1fr))] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
+        <nav className="sticky top-0 z-50 grid h-[var(--invitation-nav-height)] grid-cols-[34px_repeat(5,minmax(0,1fr))] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
           <a href="#inicio" aria-label="Inicio" className="grid place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
           <a href="#bienvenida" className="whitespace-nowrap hover:opacity-60">Bienvenida</a>
           <a href="#vestimenta" className="whitespace-nowrap hover:opacity-60">Vestimenta</a>
@@ -391,7 +435,7 @@ export function InvitationExperience({
         </nav>
 
         <section id="inicio" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
-          <div className="relative min-h-[calc(100svh-58px)] overflow-hidden text-center">
+          <div className="relative h-full overflow-hidden text-center">
             <img
               ref={heroImageRef}
               src="/figma/hero-1.png"
@@ -447,20 +491,22 @@ export function InvitationExperience({
           </div>
         </section>
 
-        <section id="vestimenta" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-center text-[#2a2a1c]">
-          <img src="/figma/design/dress-photo.png" alt="Larissa y Luis vestidos de negro" className="absolute inset-x-0 top-0 z-0 h-[65%] w-full object-cover object-center" loading="lazy" />
-          <img src="/figma/design/dress-card.svg" alt="" className="absolute inset-x-0 bottom-0 z-10 h-[52%] w-full" />
-          <div data-invitation-reveal className="absolute inset-x-7 bottom-[5%] z-20 flex flex-col items-center">
-            <p className="font-script text-[30px] font-normal leading-[normal] text-[#8b9574] [text-shadow:0px_4px_10px_rgba(0,0,0,0.25)]">Código de vestimenta</p>
-            <p className="mt-4 text-[22px] font-bold uppercase tracking-[0.5px]">Etiqueta semi-formal</p>
-            <p className="mx-auto max-w-[409px] mt-6 text-[13.5px] leading-[1.75] text-[rgba(42,42,28,0.85)]">
-              <span className="block">Pedimos a nuestros invitados vestir de etiqueta semi-formal.</span>
-              <span className="mt-1 block">Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</span>
-            </p>
-            <a href="https://pin.it/4PcnHhnvF" target="_blank" rel="noreferrer" aria-label="Ver inspiración de vestimenta en Pinterest" className="mt-7 grid h-[54px] w-[184px] place-items-center bg-[#8b9574] text-[12px] font-bold uppercase tracking-[0.8px] text-[#2a2a1c] shadow-[0_5px_7px_rgba(42,42,28,0.18)] [clip-path:polygon(7%_0,100%_0,100%_82%,93%_100%,0_100%,0_18%)] hover:brightness-95">
-              Ver inspo
+        <section id="vestimenta" className="story-screen dress-screen relative isolate overflow-hidden bg-[#2a2a1c] text-center text-[#2a2a1c]">
+          <img src="/figma/design/dress-photo.png" alt="Larissa y Luis vestidos de negro" className="dress-photo absolute inset-x-0 top-0 z-0 w-full object-cover object-center" loading="lazy" />
+          <div aria-hidden="true" className="dress-veil absolute inset-x-0 top-0 z-10" />
+          <img src="/figma/design/dress-card.svg" alt="" className="dress-card absolute inset-x-0 z-20 w-full" />
+          <div data-invitation-reveal className="dress-content absolute inset-0 z-30">
+            <p className="dress-script font-script text-[#8b9574] [text-shadow:0px_4px_10px_rgba(0,0,0,0.25)]">Código de vestimenta</p>
+            <p className="dress-title font-bold uppercase tracking-[0.5px]">Etiqueta semi-formal</p>
+            <div className="dress-copy text-[rgba(42,42,28,0.85)]">
+              <p>Pedimos a nuestros invitados vestir de etiqueta semi-formal.</p>
+              <p>Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</p>
+            </div>
+            <a href="https://pin.it/4PcnHhnvF" target="_blank" rel="noreferrer" aria-label="Ver inspiración de vestimenta en Pinterest" className="dress-inspo-button">
+              <img src="/figma/design/map-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+              <span className="relative">Ver inspo</span>
             </a>
-            <p className="mt-7 text-[15px] font-bold">En esta ocasión, el evento es solo para adultos.</p>
+            <p className="dress-adults-note font-bold">En esta ocasión, el evento es solo para adultos.</p>
           </div>
         </section>
 
@@ -481,7 +527,7 @@ export function InvitationExperience({
           </div>
         </section>
 
-        <section id="rsvp" className="story-screen relative isolate flex flex-col justify-center overflow-hidden bg-[#d9dfc2] px-7 py-8 text-center text-[#2a2a1c]">
+        <section id="rsvp" className="story-screen rsvp-screen relative isolate flex flex-col justify-center bg-[#d9dfc2] px-7 py-8 text-center text-[#2a2a1c]">
           <img src="/figma/design/rsvp-background.png" alt="" className="absolute inset-0 z-0 h-full w-full object-cover object-center" />
           <div data-invitation-reveal className="relative z-10 mx-auto flex w-full max-w-[348px] flex-col items-center">
             <p className="font-script text-[30px] leading-none text-[#2a2a1c]">Reservación</p>
@@ -636,20 +682,20 @@ export function InvitationExperience({
           </div>
         </section>
 
-        <section ref={gallerySectionRef} id="galeria" className="gallery-screen paper-texture relative isolate flex flex-col overflow-hidden px-5 pt-[26px] pb-12 text-[#2a2a1c]">
+        <section id="galeria" className="gallery-screen paper-texture relative isolate flex flex-col overflow-hidden px-5 pt-[26px] pb-5 text-[#2a2a1c]">
           <img src="/figma/design/gallery-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-50" />
-          <header data-invitation-reveal className="shrink-0 text-center">
+          <header data-invitation-reveal className="text-center">
             <p className="font-script text-[30px] leading-normal text-[#8b9574] [text-shadow:0px_4px_4px_rgba(0,0,0,0.25)]">Galería</p>
             <p className="mt-[3px] text-[20px] font-bold uppercase leading-[28px]">Nuestros momentos</p>
           </header>
-          <div className="mt-7 grid grid-cols-2 gap-[10px]">
-            {galleryPhotos.map((photo, index) => (
+          <div className="mt-5 grid min-h-0 flex-1 grid-cols-2 grid-rows-3 gap-[10px]" aria-live="polite">
+            {visibleGalleryPhotos.map((photo, index) => (
               <figure
-                key={photo.src}
+                key={`${index}-${photo.src}`}
                 ref={(element) => {
                   galleryCardsRef.current[index] = element;
                 }}
-                className={`gallery-card gallery-frame-${photo.frame} aspect-[3/4] overflow-hidden bg-[#c7b79c] shadow-sm will-change-transform`}
+                className={`gallery-card gallery-frame-${photo.frame} h-full will-change-transform`}
               >
                 <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
               </figure>

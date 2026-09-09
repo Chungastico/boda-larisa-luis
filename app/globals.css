@@ -113,10 +113,26 @@ select {
   background-size: 10px 10px;
 }
 
+.invitation-shell {
+  height: 100svh;
+  --invitation-nav-height: 58px;
+  --invitation-viewport-height: 100svh;
+  --invitation-section-height: calc(
+    var(--invitation-viewport-height) - var(--invitation-nav-height)
+  );
+}
+
+@supports (height: 100dvh) {
+  .invitation-shell {
+    height: 100dvh;
+    --invitation-viewport-height: 100dvh;
+  }
+}
+
 .invitation-scroller {
   scroll-behavior: smooth;
   scroll-snap-type: y mandatory;
-  scroll-padding-top: 58px;
+  scroll-padding-top: var(--invitation-nav-height);
   overscroll-behavior-y: contain;
   scrollbar-width: none;
 }
@@ -126,15 +142,45 @@ select {
 }
 
 .story-screen {
-  min-height: calc(100svh - 58px);
+  height: var(--invitation-section-height);
+  min-height: 0;
+  max-height: var(--invitation-section-height);
+  overflow: hidden;
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
 
 .gallery-screen {
-  min-height: min(1296px, 270vw);
+  height: var(--invitation-section-height);
+  min-height: 0;
+  max-height: var(--invitation-section-height);
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+.rsvp-screen {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+}
+
+.rsvp-screen::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .invitation-shell {
+    --invitation-viewport-height: calc(100svh - 40px);
+  }
+}
+
+@supports (height: 100dvh) {
+  @media (min-width: 768px) {
+    .invitation-shell {
+      --invitation-viewport-height: calc(100dvh - 40px);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -151,18 +197,113 @@ select {
   border-radius: 999px;
 }
 
+.gallery-card {
+  overflow: hidden;
+  background: #c7b79c;
+  box-shadow: 0 6px 16px rgb(42 42 28 / 8%);
+}
+
 .gallery-frame-arch-top {
-  border-radius: 60px 60px 0 0;
+  border-radius: 62px 62px 0 0;
 }
 
 .gallery-frame-arch-bottom {
-  border-radius: 0 0 60px 60px;
+  border-radius: 0 0 62px 62px;
 }
 
 .gallery-frame-diagonal-top {
-  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+  clip-path: polygon(11% 0, 100% 0, 100% 100%, 0 100%, 0 10%);
 }
 
 .gallery-frame-diagonal-bottom {
-  clip-path: polygon(0 0, 92% 0, 100% 100%, 8% 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 90%, 88% 100%, 0 100%);
+}
+
+/* The dress-code composition is authored at a 480px canvas in Figma. */
+.dress-screen {
+  container-type: size;
+}
+
+.dress-photo,
+.dress-veil {
+  height: min(116.6667cqw, 70.45%);
+}
+
+.dress-veil {
+  background: rgb(42 42 28 / 55%);
+  mix-blend-mode: multiply;
+}
+
+.dress-card {
+  top: min(104.375cqw, 63.02%);
+  height: min(67.7083cqw, 40.88%);
+}
+
+.dress-script,
+.dress-title,
+.dress-copy,
+.dress-inspo-button,
+.dress-adults-note {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dress-script {
+  top: min(120.2083cqw, 72.58%);
+  width: 100%;
+  font-size: min(6.25cqw, 30px);
+  font-weight: 400;
+  line-height: normal;
+}
+
+.dress-title {
+  top: min(132.0833cqw, 79.76%);
+  width: 100%;
+  font-size: min(4.5833cqw, 22px);
+  line-height: normal;
+}
+
+.dress-copy {
+  top: min(143.75cqw, 86.8%);
+  left: 50.7292%;
+  width: 85.2083%;
+  font-size: min(2.8125cqw, 13.5px);
+  line-height: 1.75;
+}
+
+.dress-copy p {
+  margin: 0;
+}
+
+.dress-inspo-button {
+  top: min(162.5cqw, 98%);
+  display: grid;
+  width: min(38.3333cqw, 184px);
+  aspect-ratio: 184 / 54;
+  place-items: center;
+  color: #2a2a1c;
+  font-size: min(2.5cqw, 12px);
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.dress-inspo-button:hover {
+  filter: brightness(0.95);
+}
+
+.dress-adults-note {
+  top: min(177.7083cqw, 107%);
+  width: 85.2083%;
+  font-size: min(3.125cqw, 15px);
+  line-height: normal;
+}
+
+/* Keep the complete card inside short, wide mobile viewports as well. */
+@container (min-width: 450px) and (max-height: 830px) {
+  .dress-content {
+    transform: scaleY(0.91);
+    transform-origin: top center;
+  }
 }
