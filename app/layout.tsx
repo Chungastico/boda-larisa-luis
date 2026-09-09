@@ -1,22 +1,33 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const siteUrl = process.env.APP_URL ?? 'http://localhost:3000';
+const localSiteUrl = 'http://localhost:3000';
+const vercelSiteUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : localSiteUrl;
+
+function getMetadataBase() {
+  try {
+    return new URL(process.env.APP_URL || vercelSiteUrl);
+  } catch {
+    return new URL(vercelSiteUrl);
+  }
+}
 
 export const metadata: Metadata = {
   title: 'Larissa & Luis | 4 de octubre de 2026',
   description: 'Invitacion de boda de Larissa y Luis.',
-  metadataBase: new URL(siteUrl),
+  metadataBase: getMetadataBase(),
   openGraph: {
     title: 'Larissa & Luis',
     description: '4 de octubre de 2026',
-    images: [{ url: '/og.png', width: 1680, height: 940, alt: 'Larissa y Luis' }],
+    images: [{ url: '/footer.png', width: 499, height: 378, alt: 'Larissa y Luis' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Larissa & Luis',
     description: '4 de octubre de 2026',
-    images: ['/og.png'],
+    images: ['/footer.png'],
   },
   icons: {
     icon: [
