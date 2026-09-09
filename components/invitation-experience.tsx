@@ -8,27 +8,12 @@ import type { Invitation, RsvpAttendeeInput, RsvpStatus } from '@/lib/invitation
 const weddingDate = new Date('2026-10-04T16:00:00-06:00');
 
 const galleryPhotos = [
-  { src: '/figma/photos/hand.png', alt: 'Larissa y Luis, detalle de sus manos', frame: 'arch-top' },
-  { src: '/figma/photos/camisa-celeste-vestido.png', alt: 'Larissa y Luis juntos', frame: 'diagonal-top' },
-  { src: '/figma/photos/boda-all-black.png', alt: 'Larissa y Luis vestidos de negro', frame: 'diagonal-bottom' },
-  { src: '/figma/photos/camisa-celeste-vestido-cuerpo-completo.png', alt: 'Larissa y Luis de cuerpo completo', frame: 'arch-bottom' },
-  { src: '/figma/photos/labios-rojos.png', alt: 'Retrato de Larissa y Luis', frame: 'arch-top' },
-  { src: '/figma/photos/puerta-del-diablo.png', alt: 'Larissa y Luis en la Puerta del Diablo', frame: 'diagonal-top' },
+  { src: '/figma/photos/labios-rojos.png', alt: 'Larissa y Luis en la naturaleza', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/puerta-del-diablo.png', alt: 'Larissa y Luis en la Puerta del Diablo', frame: 'arch-top' },
   { src: '/figma/photos/playa-negro.png', alt: 'Larissa y Luis en la playa', frame: 'diagonal-bottom' },
-  { src: '/figma/photos/sentados-en-piedra.png', alt: 'Larissa y Luis sentados en piedra', frame: 'arch-bottom' },
-  { src: '/figma/photos/lago-celeste.png', alt: 'Larissa y Luis junto al lago', frame: 'arch-top' },
-  { src: '/figma/photos/playa-oscuro.png', alt: 'Larissa y Luis en la playa al atardecer', frame: 'diagonal-top' },
-  { src: '/figma/photos/calles-de-piedra.png', alt: 'Larissa y Luis en calles de piedra', frame: 'diagonal-bottom' },
-  { src: '/figma/photos/vestido-y-camisa-celeste.png', alt: 'Larissa y Luis mirandose', frame: 'arch-bottom' },
-] as const;
-
-const galleryPages = [
-  [galleryPhotos[0], galleryPhotos[1]],
-  [galleryPhotos[2], galleryPhotos[3]],
-  [galleryPhotos[4], galleryPhotos[5]],
-  [galleryPhotos[6], galleryPhotos[7]],
-  [galleryPhotos[8], galleryPhotos[9]],
-  [galleryPhotos[10], galleryPhotos[11]],
+  { src: '/figma/photos/lago-celeste.png', alt: 'Larissa y Luis junto al lago', frame: 'diagonal-top' },
+  { src: '/figma/photos/playa-oscuro.png', alt: 'Larissa y Luis en la playa al atardecer', frame: 'diagonal-bottom' },
+  { src: '/figma/photos/calles-de-piedra.png', alt: 'Larissa y Luis en calles de piedra', frame: 'arch-top' },
 ] as const;
 
 type FamilyRsvpMode = 'all' | 'partial' | 'declined';
@@ -119,6 +104,8 @@ export function InvitationExperience({
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLImageElement>(null);
+  const gallerySectionRef = useRef<HTMLElement>(null);
+  const galleryCardsRef = useRef<(HTMLElement | null)[]>([]);
   const isFamilyInvitation = invitation.invitees.length > 1 || invitation.maxGuests > 1;
   const [decision, setDecision] = useState<RsvpStatus | null>(
     invitation.status === 'PENDING' ? null : invitation.status,
@@ -200,6 +187,35 @@ export function InvitationExperience({
       context.revert();
       scroller.removeEventListener('scroll', onScroll);
     };
+  }, []);
+
+  useEffect(() => {
+    const section = gallerySectionRef.current;
+    if (!section || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const cards = galleryCardsRef.current.filter((card): card is HTMLElement => Boolean(card));
+    const motions = [
+      { x: 4, y: -8, rotation: -0.6 },
+      { x: -4, y: 7, rotation: 0.7 },
+      { x: 3, y: -6, rotation: 0.5 },
+      { x: -3, y: 8, rotation: -0.7 },
+      { x: -4, y: -7, rotation: 0.6 },
+      { x: 4, y: 6, rotation: -0.5 },
+    ];
+    const context = gsap.context(() => {
+      cards.forEach((card, index) => {
+        gsap.to(card, {
+          ...motions[index],
+          delay: index * 0.18,
+          duration: 5.2 + index * 0.35,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+        });
+      });
+    }, section);
+
+    return () => context.revert();
   }, []);
 
   useEffect(() => {
@@ -620,23 +636,26 @@ export function InvitationExperience({
           </div>
         </section>
 
-        {galleryPages.map((photos, pageIndex) => (
-          <section key={photos[0].src} id={pageIndex === 0 ? 'galeria' : undefined} className="story-screen paper-texture relative isolate flex flex-col overflow-hidden px-5 py-10 text-[#2a2a1c]">
-            <img src="/figma/design/gallery-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-25 mix-blend-multiply" />
-            <header data-invitation-reveal className="shrink-0 text-center">
-              <p className="font-script text-[30px] leading-none text-[#8b9574]">Galería</p>
-              <p className="mt-2 text-[13px] font-bold uppercase tracking-[0.5px]">Nuestros momentos</p>
-            </header>
-            <div className="mt-7 grid min-h-0 flex-1 grid-cols-2 gap-3">
-              {photos.map((photo) => (
-                <figure key={photo.src} className={`gallery-frame-${photo.frame} h-full overflow-hidden bg-[#c7b79c] shadow-sm`}>
-                  <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
-                </figure>
-              ))}
-            </div>
-            <p className="mt-5 text-center text-[10px] font-bold tracking-[1px] text-[#8b9574]">{String(pageIndex + 1).padStart(2, '0')} / {String(galleryPages.length).padStart(2, '0')}</p>
-          </section>
-        ))}
+        <section ref={gallerySectionRef} id="galeria" className="gallery-screen paper-texture relative isolate flex flex-col overflow-hidden px-5 pt-[26px] pb-12 text-[#2a2a1c]">
+          <img src="/figma/design/gallery-texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-50" />
+          <header data-invitation-reveal className="shrink-0 text-center">
+            <p className="font-script text-[30px] leading-normal text-[#8b9574] [text-shadow:0px_4px_4px_rgba(0,0,0,0.25)]">Galería</p>
+            <p className="mt-[3px] text-[20px] font-bold uppercase leading-[28px]">Nuestros momentos</p>
+          </header>
+          <div className="mt-7 grid grid-cols-2 gap-[10px]">
+            {galleryPhotos.map((photo, index) => (
+              <figure
+                key={photo.src}
+                ref={(element) => {
+                  galleryCardsRef.current[index] = element;
+                }}
+                className={`gallery-card gallery-frame-${photo.frame} aspect-[3/4] overflow-hidden bg-[#c7b79c] shadow-sm will-change-transform`}
+              >
+                <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
+              </figure>
+            ))}
+          </div>
+        </section>
 
         <footer className="story-screen relative isolate flex flex-col items-center justify-center overflow-hidden bg-[#2a2a1c] px-7 text-center text-[#f4eee2]">
           <img src="/figma/photos/playa-oscuro.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover opacity-30 saturate-[0.45]" loading="lazy" />

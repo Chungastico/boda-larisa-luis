@@ -131,6 +131,12 @@ select {
   scroll-snap-stop: always;
 }
 
+.gallery-screen {
+  min-height: min(1296px, 270vw);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html,
   .invitation-scroller {
@@ -146,11 +152,11 @@ select {
 }
 
 .gallery-frame-arch-top {
-  border-radius: 84px 84px 0 0;
+  border-radius: 60px 60px 0 0;
 }
 
 .gallery-frame-arch-bottom {
-  border-radius: 0 0 84px 84px;
+  border-radius: 0 0 60px 60px;
 }
 
 .gallery-frame-diagonal-top {
