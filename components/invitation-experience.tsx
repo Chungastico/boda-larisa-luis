@@ -276,25 +276,22 @@ export function InvitationExperience({
             <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galeria</a>
           </nav>
 
-          <div className="relative flex min-h-[calc(100svh-58px)] flex-col items-center overflow-hidden px-7 pb-14 pt-14 text-center">
+          <div className="relative flex min-h-[calc(100svh-58px)] flex-col items-center overflow-hidden px-7 pb-14 pt-16 text-center">
             <img
               ref={heroImageRef}
-              src="/figma/photos/camisa-celeste-vestido.png"
+              src="/figma/hero-1.png"
               alt="Larissa y Luis frente a la iglesia"
-              className="absolute inset-0 -z-30 h-[calc(100%+34px)] w-full object-cover object-[52%_center] saturate-[0.72]"
+              className="absolute inset-0 -z-30 h-full w-full object-cover object-center"
             />
-            <div className="absolute inset-0 -z-20 bg-[#2a2a1c]/55 mix-blend-multiply" />
-            <img src="/figma/gradient-hero.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-90" />
-            <img src="/figma/gradient-detail.svg" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-50" />
-            <img src="/figma/texture.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-[0.08] mix-blend-overlay" />
+            <div className="absolute inset-0 -z-20 bg-[#1d2118]/[0.12]" />
 
-            <p data-invitation-reveal className="text-[13px] font-bold tracking-[4px] text-[#f4eee2]">4 · 10 · 2026</p>
-            <img data-invitation-reveal src="/figma/monogram.svg" alt="Monograma de Larissa y Luis" className="mt-5 h-[73px] w-[73px] object-contain brightness-0 invert" />
+            <p data-invitation-reveal className="text-[14px] font-bold tracking-[4.5px] text-[#f4eee2]">4 · 10 · 2026</p>
             <div className="mt-auto">
-              <h1 data-invitation-reveal className="font-script text-[64px] leading-[0.78] text-[#f4eee2] drop-shadow-md">Larissa</h1>
-              <p data-invitation-reveal className="font-script my-2 text-[38px] leading-none text-[#c7b79c]">&amp;</p>
-              <h2 data-invitation-reveal className="font-script text-[64px] leading-[0.78] text-[#f4eee2] drop-shadow-md">Luis</h2>
-              <p data-invitation-reveal className="mt-11 text-[15px] font-bold uppercase tracking-[2.8px] text-[#c7b79c]">Nos casamos</p>
+              <h1 className="sr-only">Larissa y Luis</h1>
+              <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="mx-auto h-auto w-[247px] max-w-full" />
+              <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="mx-auto my-2 h-auto w-[55px]" />
+              <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="mx-auto h-auto w-[169px] max-w-full" />
+              <p data-invitation-reveal className="mt-11 text-[15px] font-bold uppercase tracking-[3px] text-[#c7b79c]">Nos casamos</p>
             </div>
           </div>
         </section>

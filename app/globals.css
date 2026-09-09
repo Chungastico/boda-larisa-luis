@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -66,9 +68,9 @@
   --input: #d8d0bf;
   --ring: #78805e;
   --radius: 7px;
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-display: Georgia, 'Times New Roman', serif;
-  --font-script: 'Snell Roundhand', 'URW Chancery L', cursive;
+  --font-sans: 'Arimo', Arial, Helvetica, sans-serif;
+  --font-display: 'Arimo', Arial, Helvetica, sans-serif;
+  --font-script: 'Aston Script Bold', 'Aston Script', 'Snell Roundhand', 'URW Chancery L', cursive;
 }
 
 * {
@@ -101,6 +103,7 @@ select {
 
 .font-script {
   font-family: var(--font-script);
+  font-weight: 700;
 }
 
 .paper-texture {
