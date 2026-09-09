@@ -18,6 +18,13 @@ export const metadata: Metadata = {
     description: '4 de octubre de 2026',
     images: ['/og.png'],
   },
+  icons: {
+    icon: [
+      { url: '/favicon.svg?v=2', type: 'image/svg+xml', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-dark.svg?v=2', type: 'image/svg+xml', media: '(prefers-color-scheme: dark)' },
+    ],
+    apple: '/favicon.svg?v=2',
+  },
 };
 
 export default function RootLayout({
