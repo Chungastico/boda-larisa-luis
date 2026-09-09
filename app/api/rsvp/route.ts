@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { RSVP_STATUSES, updateInvitationRsvp } from '@/lib/invitations';
+import { RSVP_STATUSES, updateInvitationRsvp, type RsvpAttendeeInput } from '@/lib/invitations';
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Solicitud invalida.' }, { status: 400 });
   }
 
-  const { slug, status, attendingCount, note } = body as Record<string, unknown>;
+  const { slug, status, attendingCount, note, attendees: rawAttendees } = body as Record<string, unknown>;
 
   if (
     typeof slug !== 'string' ||
@@ -24,11 +24,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Datos de confirmacion invalidos.' }, { status: 400 });
   }
 
+  let attendees: RsvpAttendeeInput[] | undefined;
+  if (rawAttendees !== undefined) {
+    if (!Array.isArray(rawAttendees)) {
+      return NextResponse.json({ error: 'Integrantes invalidos.' }, { status: 400 });
+    }
+
+    attendees = [];
+    for (const value of rawAttendees) {
+      if (
+        !value ||
+        typeof value !== 'object' ||
+        typeof (value as Record<string, unknown>).id !== 'string' ||
+        typeof (value as Record<string, unknown>).isAttending !== 'boolean'
+      ) {
+        return NextResponse.json({ error: 'Integrantes invalidos.' }, { status: 400 });
+      }
+
+      attendees.push({
+        id: (value as Record<string, unknown>).id as string,
+        isAttending: (value as Record<string, unknown>).isAttending as boolean,
+      });
+    }
+  }
+
   const invitation = await updateInvitationRsvp({
     slug,
     status: status as (typeof RSVP_STATUSES)[number],
     attendingCount: typeof attendingCount === 'number' ? attendingCount : 0,
     note: typeof note === 'string' ? note : '',
+    attendees,
   });
 
   if (!invitation) {

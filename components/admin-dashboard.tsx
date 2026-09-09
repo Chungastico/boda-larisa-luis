@@ -2,46 +2,41 @@
 
 import { useMemo, useRef, useState } from 'react';
 import {
-  ArrowUpDown,
   Clipboard,
   ExternalLink,
   FileSpreadsheet,
+  LayoutGrid,
   LoaderCircle,
+  Mail,
   Pencil,
+  Plus,
   Search,
+  Trash2,
   Upload,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type Column,
-  type ColumnDef,
-  type SortingState,
-} from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import type { Invitation, RsvpStatus } from '@/lib/invitations';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import type { FamilyInput, FamilyMemberInput, Invitation, RsvpStatus } from '@/lib/invitations';
 import type { GuestImportEntry } from '@/lib/guest-import';
+import { seatingTables, type SeatingTable } from '@/lib/seating';
 
 const AdminUserButton = dynamic(
   () => import('@/components/admin-user-button').then((module) => module.AdminUserButton),
@@ -49,29 +44,29 @@ const AdminUserButton = dynamic(
 );
 
 const statusMeta: Record<RsvpStatus, { label: string; className: string; dot: string }> = {
-  PENDING: {
-    label: 'Pendiente',
-    className: 'border-[#d6c68b] bg-[#faf2d7] text-[#775f1d]',
-    dot: 'bg-[#b99533]',
-  },
-  ACCEPTED: {
-    label: 'Confirmado',
-    className: 'border-[#aac495] bg-[#e7f0df] text-[#416337]',
-    dot: 'bg-[#5e8a50]',
-  },
-  DECLINED: {
-    label: 'No asistira',
-    className: 'border-[#d7a89f] bg-[#f6e3df] text-[#8b453b]',
-    dot: 'bg-[#b66456]',
-  },
+  PENDING: { label: 'Pendiente', className: 'border-[#d6c68b] bg-[#faf2d7] text-[#775f1d]', dot: 'bg-[#b99533]' },
+  ACCEPTED: { label: 'Confirmado', className: 'border-[#aac495] bg-[#e7f0df] text-[#416337]', dot: 'bg-[#5e8a50]' },
+  DECLINED: { label: 'No asistirá', className: 'border-[#d7a89f] bg-[#f6e3df] text-[#8b453b]', dot: 'bg-[#b66456]' },
 };
+
+const clusterColors = [
+  { value: 'FFFF00', label: 'Amarillo' },
+  { value: 'FF99CC', label: 'Rosa' },
+  { value: 'FFCC00', label: 'Dorado' },
+  { value: '99CC00', label: 'Verde' },
+  { value: '99CCFF', label: 'Celeste' },
+  { value: 'CC99FF', label: 'Lila' },
+  { value: 'FF0000', label: 'Rojo' },
+];
+
+type SentFilter = 'ALL' | 'SENT' | 'NOT_SENT';
+type EditorState = Invitation | 'NEW' | null;
 
 function StatusPill({ status }: { status: RsvpStatus }) {
   const meta = statusMeta[status];
-
   return (
-    <span className={`inline-flex items-center gap-2 border px-2 py-1 text-xs ${meta.className}`}>
-      <span className={`status-dot ${meta.dot}`} />
+    <span className={'inline-flex items-center gap-2 border px-2 py-1 text-xs ' + meta.className}>
+      <span className={'status-dot ' + meta.dot} />
       {meta.label}
     </span>
   );
@@ -79,183 +74,238 @@ function StatusPill({ status }: { status: RsvpStatus }) {
 
 function formatResponseDate(value: string | null) {
   if (!value) return 'Sin respuesta';
-  return new Intl.DateTimeFormat('es-SV', {
-    day: 'numeric',
-    month: 'short',
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat('es-SV', { day: 'numeric', month: 'short' }).format(new Date(value));
+}
+
+function safeColor(color: string | null) {
+  return color && /^[\dA-F]{6}$/i.test(color) ? '#' + color : '#c9c0af';
+}
+
+function sourceName(source: string | null) {
+  if (!source) return 'Sin origen';
+  if (source.toLocaleLowerCase('es').includes('larissa')) return 'Larissa';
+  if (source.toLocaleLowerCase('es').includes('luis')) return 'Luis';
+  return source;
+}
+
+function memberLines(invitation: Invitation) {
+  return invitation.invitees
+    .map((member) => (member.gender ? member.name + ' | ' + member.gender : member.name))
+    .join('\n');
+}
+
+function parseMembers(value: string): FamilyMemberInput[] {
+  return value
+    .split('\n')
+    .map((line) => {
+      const [name, rawGender] = line.split('|');
+      const gender = rawGender?.trim().toUpperCase();
+      return { name: name?.trim() ?? '', gender: gender === 'F' || gender === 'M' ? gender : null };
+    })
+    .filter((member) => member.name);
+}
+
+function invitationPayload(invitation: Invitation, overrides: Partial<FamilyInput> = {}): FamilyInput {
+  return {
+    recipientName: invitation.recipientName,
+    householdName: invitation.householdName,
+    maxGuests: invitation.maxGuests,
+    status: invitation.status,
+    attendingCount: invitation.attendingCount,
+    sourceLabel: invitation.sourceLabel,
+    clusterLabel: invitation.clusterLabel,
+    clusterColor: invitation.clusterColor,
+    tableName: invitation.tableName,
+    invitationSent: invitation.invitationSent,
+    members: invitation.invitees.map(({ name, gender }) => ({ name, gender })),
+    ...overrides,
+  };
 }
 
 async function workbookEntries(file: File): Promise<GuestImportEntry[]> {
-  const [buffer, XLSX] = await Promise.all([file.arrayBuffer(), import('xlsx')]);
+  const [buffer, XLSXModule] = await Promise.all([file.arrayBuffer(), import('xlsx')]);
+  const XLSX = XLSXModule.default ?? XLSXModule;
   const workbook = XLSX.read(buffer, { cellStyles: true });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   if (!sheet) throw new Error('No encontramos una hoja para importar.');
-
-  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-    header: 1,
-    defval: null,
-    raw: false,
-  });
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null, raw: false });
   const columns = [
     { name: 1, gender: 2, letter: 'B', source: 'Invitados Larissa' as const },
     { name: 9, gender: 10, letter: 'J', source: 'Invitados Luis' as const },
   ];
 
   return rows.flatMap((row, index) => columns.map((column) => {
-    const cell = sheet[`${column.letter}${index + 1}`];
+    const cell = sheet[column.letter + String(index + 1)];
     const name = row[column.name];
-    const gender = row[column.gender];
+    const rawGender = row[column.gender];
+    const gender = typeof rawGender === 'string' ? rawGender.trim().toUpperCase() : null;
     return {
       name: typeof name === 'string' ? name.trim() : '',
-      gender: typeof gender === 'string' ? gender.trim().toUpperCase() : null,
+      gender: gender === 'F' || gender === 'M' ? gender : null,
       color: typeof cell?.s?.fgColor?.rgb === 'string' ? cell.s.fgColor.rgb.slice(-6) : null,
       source: column.source,
     };
-  })).filter((entry): entry is GuestImportEntry => (
-    Boolean(entry.name) && (entry.gender === 'F' || entry.gender === 'M')
-  ));
+  })).filter((entry) => Boolean(entry.name) && !/^invitados\s+(larissa|luis)$/i.test(entry.name));
 }
 
-function SortHead<TData>({ column, label }: { column: Column<TData, unknown>; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={column.getToggleSortingHandler()}
-      className="inline-flex items-center gap-1 text-left text-xs font-semibold uppercase text-[#6e735f] hover:text-[#313624]"
-    >
-      {label}
-      <ArrowUpDown size={13} />
-    </button>
-  );
-}
-
-function InvitationEditor({
-  invitation,
+function FamilyEditor({
+  family,
+  isNew,
   onClose,
   onSaved,
 }: {
-  invitation: Invitation | null;
+  family: Invitation | null;
+  isNew: boolean;
   onClose: () => void;
   onSaved: (invitation: Invitation) => void;
 }) {
-  const [recipientName, setRecipientName] = useState(invitation?.recipientName ?? '');
-  const [householdName, setHouseholdName] = useState(invitation?.householdName ?? '');
-  const [maxGuests, setMaxGuests] = useState(invitation?.maxGuests ?? 1);
-  const [status, setStatus] = useState<RsvpStatus>(invitation?.status ?? 'PENDING');
-  const [attendingCount, setAttendingCount] = useState(invitation?.attendingCount ?? 0);
+  const [recipientName, setRecipientName] = useState(family?.recipientName ?? '');
+  const [householdName, setHouseholdName] = useState(family?.householdName ?? '');
+  const [sourceLabel, setSourceLabel] = useState(family?.sourceLabel ?? 'Invitados Larissa');
+  const [clusterLabel, setClusterLabel] = useState(family?.clusterLabel ?? '');
+  const [clusterColor, setClusterColor] = useState(family?.clusterColor ?? '');
+  const [tableName, setTableName] = useState(family?.tableName ?? '');
+  const [maxGuests, setMaxGuests] = useState(family?.maxGuests ?? 1);
+  const [status, setStatus] = useState<RsvpStatus>(family?.status ?? 'PENDING');
+  const [attendingCount, setAttendingCount] = useState(family?.attendingCount ?? 0);
+  const [invitationSent, setInvitationSent] = useState(family?.invitationSent ?? false);
+  const [membersText, setMembersText] = useState(family ? memberLines(family) : '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   async function save() {
-    if (!invitation) return;
+    const members = parseMembers(membersText);
+    if (!recipientName.trim()) {
+      setError('Escribe el nombre de la familia o del invitado.');
+      return;
+    }
+    if (!members.length) {
+      setError('Agrega al menos un integrante de la familia.');
+      return;
+    }
 
     setSaving(true);
     setError('');
-
+    const body: FamilyInput = {
+      recipientName,
+      householdName: householdName || null,
+      sourceLabel: sourceLabel || null,
+      clusterLabel: clusterLabel || null,
+      clusterColor: clusterColor || null,
+      tableName: tableName || null,
+      maxGuests: Number(maxGuests),
+      status,
+      attendingCount: Number(attendingCount),
+      invitationSent,
+      members,
+    };
     try {
-      const response = await fetch(`/api/admin/invitations/${invitation.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientName,
-          householdName,
-          maxGuests: Number(maxGuests),
-          status,
-          attendingCount: Number(attendingCount),
-        }),
-      });
-      const payload = (await response.json()) as { invitation?: Invitation; error?: string };
-
-      if (!response.ok || !payload.invitation) {
-        throw new Error(payload.error ?? 'No se pudo actualizar la invitacion.');
-      }
-
+      const response = await fetch(
+        family ? '/api/admin/invitations/' + family.id : '/api/admin/invitations',
+        { method: family ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      );
+      const payload = (await response.json().catch(() => null)) as { invitation?: Invitation; error?: string } | null;
+      if (!response.ok || !payload?.invitation) throw new Error(payload?.error ?? 'No se pudo guardar la familia.');
       onSaved(payload.invitation);
       onClose();
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : 'No se pudo actualizar la invitacion.',
-      );
+      setError(requestError instanceof Error ? requestError.message : 'No se pudo guardar la familia.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Dialog open={Boolean(invitation)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[calc(100%-1.5rem)] rounded-none border-[#d8d0bf] bg-[#fffaf0] p-6 sm:max-w-md">
+    <Dialog open={Boolean(family) || isNew} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[calc(100vh-1.5rem)] max-w-[calc(100%-1.5rem)] overflow-y-auto rounded-none border-[#d8d0bf] bg-[#fffaf0] p-6 sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Editar invitacion</DialogTitle>
-          <DialogDescription>Actualiza el destinatario, cupo y estado de la respuesta.</DialogDescription>
+          <DialogTitle className="font-display text-2xl">{family ? 'Editar familia' : 'Agregar familia'}</DialogTitle>
+          <DialogDescription>Cada registro reúne a una familia, su origen, integrantes y asignación de mesa.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={(event) => { event.preventDefault(); void save(); }} className="mt-1 space-y-4">
-          <label htmlFor="recipient-name" className="block text-sm">
-            <span className="mb-1.5 block text-[#5c614d]">Destinatario</span>
-            <Input
-              id="recipient-name"
-              value={recipientName}
-              onChange={(event) => setRecipientName(event.target.value)}
-              className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]"
-            />
-          </label>
-          <label htmlFor="household-name" className="block text-sm">
-            <span className="mb-1.5 block text-[#5c614d]">Familia o grupo</span>
-            <Input
-              id="household-name"
-              value={householdName}
-              onChange={(event) => setHouseholdName(event.target.value)}
-              className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]"
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label htmlFor="max-guests" className="block text-sm">
-              <span className="mb-1.5 block text-[#5c614d]">Cupo</span>
-              <Input
-                id="max-guests"
-                type="number"
-                min={1}
-                max={20}
-                value={maxGuests}
-                onChange={(event) => setMaxGuests(Number(event.target.value))}
-                className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]"
-              />
+        <form onSubmit={(event) => { event.preventDefault(); void save(); }} className="mt-2 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label htmlFor="recipient-name" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Nombre visible de la familia</span>
+              <Input id="recipient-name" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} placeholder="Familia Vides" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
             </label>
-            <label htmlFor="attending-count" className="block text-sm">
-              <span className="mb-1.5 block text-[#5c614d]">Confirmados</span>
-              <Input
-                id="attending-count"
-                type="number"
-                min={0}
-                max={maxGuests}
-                value={attendingCount}
-                onChange={(event) => setAttendingCount(Number(event.target.value))}
-                className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]"
-              />
+            <label htmlFor="household-name" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Familia o grupo</span>
+              <Input id="household-name" value={householdName} onChange={(event) => setHouseholdName(event.target.value)} placeholder="Opcional" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
             </label>
           </div>
-          <label htmlFor="rsvp-status" className="block text-sm">
-            <span className="mb-1.5 block text-[#5c614d]">Estado</span>
-            <select
-              id="rsvp-status"
-              value={status}
-              onChange={(event) => setStatus(event.target.value as RsvpStatus)}
-              className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20"
-            >
-              <option value="PENDING">Pendiente</option>
-              <option value="ACCEPTED">Confirmado</option>
-              <option value="DECLINED">No asistira</option>
-            </select>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label htmlFor="guest-source" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Origen de los invitados</span>
+              <select id="guest-source" value={sourceLabel} onChange={(event) => setSourceLabel(event.target.value)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
+                <option value="Invitados Larissa">Invitados Larissa</option>
+                <option value="Invitados Luis">Invitados Luis</option>
+                <option value="Ambos">Ambos</option>
+                <option value="Sin origen">Sin origen</option>
+              </select>
+            </label>
+            <label htmlFor="table-name" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Mesa asignada</span>
+              <select id="table-name" value={tableName} onChange={(event) => setTableName(event.target.value)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
+                <option value="">Sin asignar</option>
+                {seatingTables.map((table) => <option key={table.name} value={table.name}>{table.name}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label htmlFor="cluster-label" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Clúster familiar</span>
+              <Input id="cluster-label" value={clusterLabel} onChange={(event) => setClusterLabel(event.target.value)} placeholder="Ej. Grupo dorado" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
+            </label>
+            <label htmlFor="cluster-color" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Color del clúster</span>
+              <select id="cluster-color" value={clusterColor} onChange={(event) => setClusterColor(event.target.value)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
+                <option value="">Sin color</option>
+                {clusterColors.map((color) => <option key={color.value} value={color.value}>{color.label}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3">
+              <label htmlFor="max-guests" className="block text-sm">
+                <span className="mb-1.5 block text-[#5c614d]">Cupo</span>
+                <Input id="max-guests" type="number" min={1} max={40} value={maxGuests} onChange={(event) => setMaxGuests(Number(event.target.value))} className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0]" />
+              </label>
+              <label htmlFor="attending-count" className="block text-sm">
+                <span className="mb-1.5 block text-[#5c614d]">Confirmados</span>
+                <Input id="attending-count" type="number" min={0} max={maxGuests} value={attendingCount} disabled={status !== 'ACCEPTED'} onChange={(event) => setAttendingCount(Number(event.target.value))} className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0] disabled:opacity-50" />
+              </label>
+            </div>
+            <label htmlFor="rsvp-status" className="block text-sm">
+              <span className="mb-1.5 block text-[#5c614d]">Respuesta</span>
+              <select id="rsvp-status" value={status} onChange={(event) => setStatus(event.target.value as RsvpStatus)} className="h-10 w-full rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20">
+                <option value="PENDING">Pendiente</option>
+                <option value="ACCEPTED">Confirmado</option>
+                <option value="DECLINED">No asistirá</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between border border-[#d8d0bf] bg-[#f8f4eb] px-4 py-3 text-sm">
+            <span>
+              <span className="block font-medium text-[#313624]">Invitación enviada</span>
+              <span className="text-xs text-[#6e735f]">Actualiza este estado cuando se comparta el enlace.</span>
+            </span>
+            <Switch checked={invitationSent} onCheckedChange={setInvitationSent} aria-label="Invitación enviada" />
+          </div>
+
+          <label htmlFor="family-members" className="block text-sm">
+            <span className="mb-1.5 block text-[#5c614d]">Integrantes de la familia</span>
+            <textarea id="family-members" value={membersText} onChange={(event) => setMembersText(event.target.value)} placeholder={'Nombre completo | F o M\nEj. Gabriela Vides | F'} rows={6} className="w-full resize-y rounded-none border border-[#c9c0af] bg-[#fffaf0] px-3 py-2 text-sm outline-none focus:border-[#78805e] focus:ring-2 focus:ring-[#78805e]/20" />
+            <span className="mt-1 block text-xs text-[#6e735f]">Una persona por línea. El género es opcional.</span>
           </label>
+
           {error && <p className="text-sm text-[#a54e43]">{error}</p>}
           <div className="flex justify-end gap-2 border-t border-[#d8d0bf] pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-none">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving} className="rounded-none bg-[#424934]">
-              {saving ? 'Guardando...' : 'Guardar cambios'}
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-none">Cancelar</Button>
+            <Button type="submit" disabled={saving} className="rounded-none bg-[#424934]">{saving ? 'Guardando...' : family ? 'Guardar cambios' : 'Agregar familia'}</Button>
           </div>
         </form>
       </DialogContent>
@@ -263,22 +313,91 @@ function InvitationEditor({
   );
 }
 
-export function AdminDashboard({
-  initialInvitations,
-  isDemo,
-}: {
-  initialInvitations: Invitation[];
-  isDemo: boolean;
-}) {
+type Seat = { id: string; name: string; familyName: string; source: string | null; color: string | null };
+
+function SeatCard({ seat, order }: { seat: Seat; order: number }) {
+  return (
+    <div className="min-w-0 border border-[#d8d0bf] border-l-[3px] bg-[#fffaf0] px-2.5 py-2" style={{ borderLeftColor: safeColor(seat.color) }}>
+      <p className="truncate text-xs font-semibold text-[#313624]">{String(order) + '. ' + seat.name}</p>
+      <p className="truncate pt-0.5 text-[11px] text-[#6e735f]">{seat.familyName + ' · ' + sourceName(seat.source)}</p>
+    </div>
+  );
+}
+
+function SeatingMap({ table, families }: { table: SeatingTable; families: Invitation[] }) {
+  const seats = families.flatMap((family) => family.invitees.map((member) => ({
+    id: member.id,
+    name: member.name,
+    familyName: family.recipientName,
+    source: family.sourceLabel,
+    color: family.clusterColor,
+  })));
+  const topCount = Math.min(4, Math.ceil(seats.length / 3));
+  const sideCount = Math.min(2, Math.floor((seats.length - topCount) / 3));
+  const top = seats.slice(0, topCount);
+  const left = seats.slice(topCount, topCount + sideCount);
+  const right = seats.slice(topCount + sideCount, topCount + sideCount * 2);
+  const bottom = seats.slice(topCount + sideCount * 2);
+  const available = table.capacity - seats.length;
+  const availability = available < 0
+    ? 'Reubicar ' + String(Math.abs(available)) + (Math.abs(available) === 1 ? ' persona' : ' personas')
+    : String(available) + (available === 1 ? ' espacio disponible' : ' espacios disponibles');
+
+  return (
+    <section className="border border-[#d8d0bf] bg-[#f8f4eb] p-4 sm:p-6">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6e735f]">Distribución visual</p>
+          <h2 className="font-display mt-1 text-2xl">{table.name}</h2>
+        </div>
+        <p className={'text-sm font-medium ' + (available < 0 ? 'text-[#a54e43]' : 'text-[#527145]')}>{availability}</p>
+      </div>
+
+      {seats.length ? (
+        <div className="mx-auto max-w-4xl space-y-3">
+          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
+            {top.map((seat, index) => <SeatCard key={seat.id} seat={seat} order={index + 1} />)}
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(9rem,.8fr)_minmax(0,1fr)] items-center gap-3">
+            <div className="space-y-2">{left.map((seat, index) => <SeatCard key={seat.id} seat={seat} order={top.length + index + 1} />)}</div>
+            <div className="flex aspect-square min-h-36 items-center justify-center border-2 border-[#424934] bg-[#e7ddcc] p-3 text-center">
+              <div>
+                <p className="font-display text-xl text-[#313624]">{table.name}</p>
+                <p className="mt-1 text-xs text-[#5c614d]">{String(seats.length) + ' de ' + String(table.capacity) + ' asignados'}</p>
+              </div>
+            </div>
+            <div className="space-y-2">{right.map((seat, index) => <SeatCard key={seat.id} seat={seat} order={top.length + left.length + index + 1} />)}</div>
+          </div>
+          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
+            {bottom.map((seat, index) => <SeatCard key={seat.id} seat={seat} order={top.length + left.length + right.length + index + 1} />)}
+          </div>
+        </div>
+      ) : (
+        <div className="grid min-h-56 place-items-center border border-dashed border-[#c9c0af] bg-[#fffaf0] text-center">
+          <div>
+            <LayoutGrid className="mx-auto text-[#78805e]" size={28} />
+            <p className="mt-3 text-sm text-[#5c614d]">Aún no hay familias asignadas a esta mesa.</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitations: Invitation[]; isDemo: boolean }) {
   const [invitations, setInvitations] = useState(initialInvitations);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<RsvpStatus | 'ALL'>('ALL');
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [editing, setEditing] = useState<Invitation | null>(null);
+  const [sentFilter, setSentFilter] = useState<SentFilter>('ALL');
+  const [activeView, setActiveView] = useState<'families' | 'tables'>('families');
+  const [editing, setEditing] = useState<EditorState>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Invitation | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [importMessage, setImportMessage] = useState('');
   const [importError, setImportError] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(seatingTables[0].name);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const metrics = useMemo(() => {
@@ -288,34 +407,96 @@ export function AdminDashboard({
       people: invitations.reduce((sum, item) => sum + item.maxGuests, 0),
       accepted: accepted.reduce((sum, item) => sum + item.attendingCount, 0),
       pending: invitations.filter((item) => item.status === 'PENDING').length,
+      sent: invitations.filter((item) => item.invitationSent).length,
       declined: invitations.filter((item) => item.status === 'DECLINED').length,
     };
   }, [invitations]);
 
   const filteredInvitations = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return invitations.filter((invitation) => {
-      const matchesStatus = statusFilter === 'ALL' || invitation.status === statusFilter;
-      const haystack = `${invitation.recipientName} ${invitation.householdName ?? ''} ${invitation.sourceLabel ?? ''}`.toLowerCase();
-      return matchesStatus && (!normalized || haystack.includes(normalized));
+    const normalized = query.trim().toLocaleLowerCase('es');
+    return invitations
+      .filter((invitation) => {
+        const matchesStatus = statusFilter === 'ALL' || invitation.status === statusFilter;
+        const matchesSent = sentFilter === 'ALL'
+          || (sentFilter === 'SENT' && invitation.invitationSent)
+          || (sentFilter === 'NOT_SENT' && !invitation.invitationSent);
+        const haystack = [
+          invitation.recipientName,
+          invitation.householdName,
+          invitation.sourceLabel,
+          invitation.clusterLabel,
+          invitation.tableName,
+          ...invitation.invitees.map((member) => member.name),
+        ].filter(Boolean).join(' ').toLocaleLowerCase('es');
+        return matchesStatus && matchesSent && (!normalized || haystack.includes(normalized));
+      })
+      .sort((left, right) => left.recipientName.localeCompare(right.recipientName, 'es'));
+  }, [invitations, query, sentFilter, statusFilter]);
+
+  const tableSummaries = useMemo(() => seatingTables.map((table) => {
+    const families = invitations.filter((invitation) => invitation.tableName === table.name);
+    const occupied = families.reduce((total, family) => total + family.invitees.length, 0);
+    return { table, families, occupied, available: table.capacity - occupied };
+  }), [invitations]);
+  const currentTable = tableSummaries.find((summary) => summary.table.name === selectedTable) ?? tableSummaries[0];
+  const unassignedFamilies = invitations.filter((invitation) => !invitation.tableName);
+
+  function updateInvitation(updated: Invitation) {
+    setInvitations((items) => {
+      const exists = items.some((item) => item.id === updated.id);
+      return exists ? items.map((item) => (item.id === updated.id ? updated : item)) : [...items, updated];
     });
-  }, [invitations, query, statusFilter]);
+  }
 
   async function copyLink(invitation: Invitation) {
-    await navigator.clipboard.writeText(`${window.location.origin}/i/${invitation.slug}`);
+    await navigator.clipboard.writeText(window.location.origin + '/i/' + invitation.slug);
     setCopiedId(invitation.id);
     window.setTimeout(() => setCopiedId(null), 1_800);
+  }
+
+  async function toggleInvitationSent(invitation: Invitation, checked: boolean) {
+    setSavingId(invitation.id);
+    setImportError('');
+    try {
+      const response = await fetch('/api/admin/invitations/' + invitation.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invitationPayload(invitation, { invitationSent: checked })),
+      });
+      const payload = (await response.json().catch(() => null)) as { invitation?: Invitation; error?: string } | null;
+      if (!response.ok || !payload?.invitation) throw new Error(payload?.error ?? 'No se pudo actualizar el envío.');
+      updateInvitation(payload.invitation);
+    } catch (requestError) {
+      setImportError(requestError instanceof Error ? requestError.message : 'No se pudo actualizar el envío.');
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function deleteFamily() {
+    if (!deleteTarget) return;
+    setSavingId(deleteTarget.id);
+    setImportError('');
+    try {
+      const response = await fetch('/api/admin/invitations/' + deleteTarget.id, { method: 'DELETE' });
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) throw new Error(payload?.error ?? 'No se pudo eliminar la familia.');
+      setInvitations((items) => items.filter((item) => item.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (requestError) {
+      setImportError(requestError instanceof Error ? requestError.message : 'No se pudo eliminar la familia.');
+    } finally {
+      setSavingId(null);
+    }
   }
 
   async function importWorkbook(file: File) {
     setIsImporting(true);
     setImportError('');
     setImportMessage('');
-
     try {
       const entries = await workbookEntries(file);
-      if (!entries.length) throw new Error('No encontramos nombres validos en las columnas de invitados.');
-
+      if (!entries.length) throw new Error('No encontramos nombres válidos en las columnas de invitados.');
       const response = await fetch('/api/admin/invitations/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -326,13 +507,9 @@ export function AdminDashboard({
         invitations?: Invitation[];
         error?: string;
       } | null;
-
-      if (!response.ok || !payload?.summary || !payload.invitations) {
-        throw new Error(payload?.error ?? 'No se pudo importar el archivo.');
-      }
-
+      if (!response.ok || !payload?.summary || !payload.invitations) throw new Error(payload?.error ?? 'No se pudo importar el archivo.');
       setInvitations(payload.invitations);
-      setImportMessage(`${payload.summary.guests} personas organizadas en ${payload.summary.invitations} invitaciones.`);
+      setImportMessage(String(payload.summary.guests) + ' personas organizadas en ' + String(payload.summary.invitations) + ' familias.');
     } catch (requestError) {
       setImportError(requestError instanceof Error ? requestError.message : 'No se pudo importar el archivo.');
     } finally {
@@ -340,112 +517,20 @@ export function AdminDashboard({
     }
   }
 
-  const columns = useMemo<ColumnDef<Invitation>[]>(
-    () => [
-      {
-        accessorKey: 'recipientName',
-        header: ({ column }) => <SortHead column={column} label="Invitado" />,
-        cell: ({ row }) => (
-          <div className="min-w-44">
-            <p className="font-medium text-[#313624]">{row.original.recipientName}</p>
-            <p className="mt-0.5 text-xs text-[#6e735f]">{row.original.sourceLabel ?? 'Sin grupo'}</p>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'maxGuests',
-        header: ({ column }) => <SortHead column={column} label="Cupo" />,
-        cell: ({ row }) => (
-          <span className="text-sm text-[#5c614d]">
-            {row.original.attendingCount} / {row.original.maxGuests}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'status',
-        header: ({ column }) => <SortHead column={column} label="Estado" />,
-        cell: ({ row }) => <StatusPill status={row.original.status} />,
-      },
-      {
-        accessorKey: 'respondedAt',
-        header: ({ column }) => <SortHead column={column} label="Respuesta" />,
-        cell: ({ row }) => <span className="text-sm text-[#5c614d]">{formatResponseDate(row.original.respondedAt)}</span>,
-      },
-      {
-        id: 'actions',
-        header: () => <span className="sr-only">Acciones</span>,
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="rounded-none text-[#5c614d] hover:bg-[#ece6da]"
-                    aria-label="Copiar enlace de invitacion"
-                    onClick={() => void copyLink(row.original)}
-                  >
-                    <Clipboard size={16} />
-                  </Button>
-                }
-              />
-              <TooltipContent>{copiedId === row.original.id ? 'Enlace copiado' : 'Copiar enlace'}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <a
-                    href={`/i/${row.original.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Abrir invitacion"
-                    className="inline-flex size-7 items-center justify-center text-[#5c614d] hover:bg-[#ece6da]"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
-                }
-              />
-              <TooltipContent>Abrir invitacion</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="rounded-none text-[#5c614d] hover:bg-[#ece6da]"
-                    aria-label="Editar invitacion"
-                    onClick={() => setEditing(row.original)}
-                  >
-                    <Pencil size={16} />
-                  </Button>
-                }
-              />
-              <TooltipContent>Editar invitacion</TooltipContent>
-            </Tooltip>
-          </div>
-        ),
-      },
-    ],
-    [copiedId],
-  );
-
-  const table = useReactTable({
-    data: filteredInvitations,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-
-  const filterOptions: Array<{ value: RsvpStatus | 'ALL'; label: string }> = [
+  const statusOptions: Array<{ value: RsvpStatus | 'ALL'; label: string }> = [
     { value: 'ALL', label: 'Todos' },
     { value: 'PENDING', label: 'Pendientes' },
     { value: 'ACCEPTED', label: 'Confirmados' },
-    { value: 'DECLINED', label: 'No asistiran' },
+    { value: 'DECLINED', label: 'No asistirán' },
   ];
+  const metricsList = [
+    ['Familias', metrics.invitations, ''],
+    ['Cupo total', metrics.people, ''],
+    ['Confirmados', metrics.accepted, 'text-[#527145]'],
+    ['Pendientes', metrics.pending, 'text-[#9a7723]'],
+    ['Enviadas', metrics.sent, 'text-[#527145]'],
+    ['No asistirán', metrics.declined, 'text-[#9a5148]'],
+  ] as const;
 
   return (
     <TooltipProvider>
@@ -466,7 +551,7 @@ export function AdminDashboard({
               <p className="text-xs uppercase text-[#6e735f]">Boda / 04.10.2026</p>
               <h1 className="font-display mt-2 text-4xl leading-none">Control de invitados</h1>
             </div>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <input
                 ref={importInputRef}
                 type="file"
@@ -478,124 +563,198 @@ export function AdminDashboard({
                   if (file) void importWorkbook(file);
                 }}
               />
+              <Button type="button" variant="outline" onClick={() => setEditing('NEW')} className="h-10 rounded-none border-[#78805e] px-4">
+                <Plus size={16} /> Agregar familia
+              </Button>
               <Button type="button" onClick={() => importInputRef.current?.click()} disabled={isImporting || isDemo} className="h-10 rounded-none bg-[#424934] px-4">
                 {isImporting ? <LoaderCircle className="animate-spin" size={16} /> : <Upload size={16} />}
                 {isImporting ? 'Importando...' : 'Importar Excel'}
               </Button>
               {invitations[0] && (
-                <a href={`/i/${invitations[0].slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#4c513d] underline underline-offset-4">
-                  Ver una invitacion <ExternalLink size={15} />
+                <a href={'/i/' + invitations[0].slug} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#4c513d] underline underline-offset-4">
+                  Ver una invitación <ExternalLink size={15} />
                 </a>
               )}
             </div>
           </div>
 
           {(importMessage || importError) && (
-            <div className={`mt-5 flex items-center gap-2 border px-4 py-3 text-sm ${importError ? 'border-[#d7a89f] bg-[#f6e3df] text-[#8b453b]' : 'border-[#aac495] bg-[#e7f0df] text-[#416337]'}`}>
-              <FileSpreadsheet size={17} />
-              {importError || importMessage}
+            <div className={'mt-5 flex items-center gap-2 border px-4 py-3 text-sm ' + (importError ? 'border-[#d7a89f] bg-[#f6e3df] text-[#8b453b]' : 'border-[#aac495] bg-[#e7f0df] text-[#416337]')}>
+              <FileSpreadsheet size={17} /> {importError || importMessage}
             </div>
           )}
 
-          <section className="mt-8 grid grid-cols-2 border-y border-[#d8d0bf] sm:grid-cols-5">
-            <div className="border-b border-r border-[#d8d0bf] px-4 py-5 sm:border-b-0">
-              <p className="text-xs uppercase text-[#6e735f]">Invitaciones</p>
-              <p className="font-display mt-2 text-3xl leading-none">{metrics.invitations}</p>
-            </div>
-            <div className="border-b border-[#d8d0bf] px-4 py-5 sm:border-b-0 sm:border-r">
-              <p className="text-xs uppercase text-[#6e735f]">Cupo total</p>
-              <p className="font-display mt-2 text-3xl leading-none">{metrics.people}</p>
-            </div>
-            <div className="border-r border-[#d8d0bf] px-4 py-5">
-              <p className="text-xs uppercase text-[#6e735f]">Confirmados</p>
-              <p className="font-display mt-2 text-3xl leading-none text-[#527145]">{metrics.accepted}</p>
-            </div>
-            <div className="px-4 py-5">
-              <p className="text-xs uppercase text-[#6e735f]">Pendientes</p>
-              <p className="font-display mt-2 text-3xl leading-none text-[#9a7723]">{metrics.pending}</p>
-            </div>
-            <div className="border-t border-[#d8d0bf] px-4 py-5 sm:border-l sm:border-t-0">
-              <p className="text-xs uppercase text-[#6e735f]">No asistiran</p>
-              <p className="font-display mt-2 text-3xl leading-none text-[#9a5148]">{metrics.declined}</p>
-            </div>
+          <section className="mt-8 grid grid-cols-2 border-y border-[#d8d0bf] sm:grid-cols-3 lg:grid-cols-6">
+            {metricsList.map(([label, value, color], index) => (
+              <div key={label} className={'border-[#d8d0bf] px-4 py-5 ' + (index % 2 === 0 ? 'border-r sm:border-r ' : '') + (index < 4 ? 'border-b sm:border-b ' : 'sm:border-b ') + 'lg:border-b-0 lg:border-r lg:last:border-r-0'}>
+                <p className="text-xs uppercase text-[#6e735f]">{label}</p>
+                <p className={'font-display mt-2 text-3xl leading-none ' + color}>{value}</p>
+              </div>
+            ))}
           </section>
 
-          <section className="mt-8">
-            <div className="flex flex-col gap-4 border-b border-[#d8d0bf] pb-5 md:flex-row md:items-center md:justify-between">
-              <div className="relative max-w-md flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#78805e]" size={17} />
-                <Input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Buscar invitado o familia"
-                  className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0] pl-10"
-                />
-              </div>
-              <div className="flex overflow-x-auto border border-[#c9c0af] bg-[#fffaf0]">
-                {filterOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setStatusFilter(option.value)}
-                    className={`h-9 shrink-0 border-r border-[#c9c0af] px-3 text-sm last:border-r-0 ${statusFilter === option.value ? 'bg-[#424934] text-[#fffaf0]' : 'text-[#5c614d] hover:bg-[#ece6da]'}`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'families' | 'tables')} className="mt-8 gap-5">
+            <TabsList variant="line" className="h-auto w-full justify-start gap-5 border-b border-[#d8d0bf] p-0">
+              <TabsTrigger value="families" className="h-10 rounded-none px-1 text-[#5c614d] data-active:text-[#313624]"><Users size={16} /> Familias</TabsTrigger>
+              <TabsTrigger value="tables" className="h-10 rounded-none px-1 text-[#5c614d] data-active:text-[#313624]"><LayoutGrid size={16} /> Vista por mesa</TabsTrigger>
+            </TabsList>
 
-            <div className="mt-5 border border-[#d8d0bf] bg-[#fffaf0]">
-              <Table>
-                <TableHeader className="bg-[#ece6da]/60">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id} className="h-11 px-4">
-                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
+            <TabsContent value="families">
+              <section>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="relative max-w-md flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#78805e]" size={17} />
+                    <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar invitado, familia, clúster o mesa" className="h-10 rounded-none border-[#c9c0af] bg-[#fffaf0] pl-10" />
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex overflow-x-auto border border-[#c9c0af] bg-[#fffaf0]">
+                      {statusOptions.map((option) => (
+                        <button key={option.value} type="button" onClick={() => setStatusFilter(option.value)} className={statusFilter === option.value ? 'h-9 shrink-0 border-r border-[#c9c0af] bg-[#424934] px-3 text-sm text-[#fffaf0] last:border-r-0' : 'h-9 shrink-0 border-r border-[#c9c0af] px-3 text-sm text-[#5c614d] hover:bg-[#ece6da] last:border-r-0'}>
+                          {option.label}
+                        </button>
                       ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} className="hover:bg-[#f8f4eb]">
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} className="px-4 py-3">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} className="h-32 text-center text-sm text-[#6e735f]">
-                        No hay invitaciones que coincidan con la busqueda.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
+                    </div>
+                    <div className="flex overflow-x-auto border border-[#c9c0af] bg-[#fffaf0]">
+                      {([
+                        ['ALL', 'Todas'],
+                        ['SENT', 'Enviadas'],
+                        ['NOT_SENT', 'Sin enviar'],
+                      ] as Array<[SentFilter, string]>).map(([value, label]) => (
+                        <button key={value} type="button" onClick={() => setSentFilter(value)} className={sentFilter === value ? 'h-9 shrink-0 border-r border-[#c9c0af] bg-[#78805e] px-3 text-sm text-[#fffaf0] last:border-r-0' : 'h-9 shrink-0 border-r border-[#c9c0af] px-3 text-sm text-[#5c614d] hover:bg-[#ece6da] last:border-r-0'}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-          <div className="mt-6 flex items-center gap-2 text-sm text-[#6e735f]">
-            <Users size={17} className="text-[#78805e]" />
-            <span>{filteredInvitations.length} registros visibles</span>
-          </div>
+                <div className="mt-5 overflow-x-auto border border-[#d8d0bf] bg-[#fffaf0]">
+                  <Table className="min-w-[920px]">
+                    <TableHeader className="bg-[#ece6da]/60">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Familia</TableHead>
+                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Origen y clúster</TableHead>
+                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Mesa</TableHead>
+                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Cupo</TableHead>
+                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Enviada</TableHead>
+                        <TableHead className="h-11 px-4 text-xs font-semibold uppercase text-[#6e735f]">Respuesta</TableHead>
+                        <TableHead className="h-11 px-4"><span className="sr-only">Acciones</span></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredInvitations.length ? filteredInvitations.map((invitation) => (
+                        <TableRow key={invitation.id} className="hover:bg-[#f8f4eb]">
+                          <TableCell className="px-4 py-3">
+                            <div className="min-w-48">
+                              <p className="font-medium text-[#313624]">{invitation.recipientName}</p>
+                              <p className="mt-0.5 max-w-xs truncate text-xs text-[#6e735f]">{invitation.invitees.map((member) => member.name).join(', ') || 'Sin integrantes'}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex min-w-36 flex-col gap-1">
+                              <span className="text-sm text-[#4c513d]">{invitation.sourceLabel ?? 'Sin origen'}</span>
+                              <span className="inline-flex items-center gap-1.5 text-xs text-[#6e735f]">
+                                <span className="size-2 rounded-full border border-black/10" style={{ backgroundColor: safeColor(invitation.clusterColor) }} />
+                                {invitation.clusterLabel ?? 'Sin clúster'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-[#5c614d]">{invitation.tableName ?? 'Sin asignar'}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-[#5c614d]">{String(invitation.attendingCount) + ' / ' + String(invitation.maxGuests)}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <label className="flex min-w-28 items-center gap-2 text-sm text-[#5c614d]">
+                              <Switch size="sm" checked={invitation.invitationSent} disabled={savingId === invitation.id} onCheckedChange={(checked) => void toggleInvitationSent(invitation, checked)} aria-label={'Invitación enviada a ' + invitation.recipientName} />
+                              {invitation.invitationSent ? 'Sí' : 'No'}
+                            </label>
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            <StatusPill status={invitation.status} />
+                            <p className="mt-1 text-xs text-[#6e735f]">{formatResponseDate(invitation.respondedAt)}</p>
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex justify-end gap-1">
+                              <Tooltip>
+                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label="Copiar enlace de invitación" onClick={() => void copyLink(invitation)}><Clipboard size={16} /></Button>} />
+                                <TooltipContent>{copiedId === invitation.id ? 'Enlace copiado' : 'Copiar enlace'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger render={<a href={'/i/' + invitation.slug} target="_blank" rel="noreferrer" aria-label="Abrir invitación" className="inline-flex size-7 items-center justify-center text-[#5c614d] hover:bg-[#ece6da]"><ExternalLink size={16} /></a>} />
+                                <TooltipContent>Abrir invitación</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label="Editar familia" onClick={() => setEditing(invitation)}><Pencil size={16} /></Button>} />
+                                <TooltipContent>Editar familia</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger render={<Button variant="ghost" size="icon-sm" className="rounded-none text-[#a54e43] hover:bg-[#f6e3df]" aria-label="Eliminar familia" onClick={() => setDeleteTarget(invitation)}><Trash2 size={16} /></Button>} />
+                                <TooltipContent>Eliminar familia</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow><TableCell colSpan={7} className="h-32 text-center text-sm text-[#6e735f]">No hay familias que coincidan con los filtros.</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="mt-6 flex items-center gap-2 text-sm text-[#6e735f]"><Users size={17} className="text-[#78805e]" /><span>{String(filteredInvitations.length) + ' familias visibles'}</span></div>
+              </section>
+            </TabsContent>
+
+            <TabsContent value="tables">
+              <section>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {tableSummaries.map((summary) => {
+                    const isSelected = summary.table.name === selectedTable;
+                    const usage = Math.min(100, Math.max(0, (summary.occupied / summary.table.capacity) * 100));
+                    const availableText = summary.available < 0 ? '+' + String(Math.abs(summary.available)) : String(summary.available) + (summary.available === 1 ? ' libre' : ' libres');
+                    return (
+                      <button key={summary.table.name} type="button" onClick={() => setSelectedTable(summary.table.name)} className={isSelected ? 'border border-[#424934] bg-[#fffaf0] p-4 text-left ring-1 ring-[#424934]' : 'border border-[#d8d0bf] bg-[#f8f4eb] p-4 text-left hover:bg-[#fffaf0]'}>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium text-[#313624]">{summary.table.name}</span>
+                          <span className={'text-xs font-medium ' + (summary.available < 0 ? 'text-[#a54e43]' : 'text-[#527145]')}>{availableText}</span>
+                        </div>
+                        <p className="mt-2 text-sm text-[#5c614d]">{String(summary.occupied) + ' / ' + String(summary.table.capacity) + ' asignados'}</p>
+                        <div className="mt-3 h-1.5 overflow-hidden bg-[#e2dbce]"><div className="h-full" style={{ width: String(usage) + '%', backgroundColor: summary.table.color }} /></div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {currentTable && <div className="mt-6"><SeatingMap table={currentTable.table} families={currentTable.families} /></div>}
+
+                {unassignedFamilies.length > 0 && (
+                  <section className="mt-6 border border-dashed border-[#c9c0af] bg-[#fffaf0] p-4">
+                    <div className="flex items-center gap-2">
+                      <Mail size={17} className="text-[#78805e]" />
+                      <p className="font-medium text-[#313624]">{String(unassignedFamilies.length) + (unassignedFamilies.length === 1 ? ' familia sin mesa asignada' : ' familias sin mesa asignada')}</p>
+                    </div>
+                    <p className="mt-1 text-sm text-[#6e735f]">{unassignedFamilies.map((family) => family.recipientName).join(', ')}</p>
+                  </section>
+                )}
+              </section>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
-      <InvitationEditor
-        key={editing?.id ?? 'closed'}
-        invitation={editing}
-        onClose={() => setEditing(null)}
-        onSaved={(updated) => {
-          setInvitations((items) => items.map((item) => (item.id === updated.id ? updated : item)));
-        }}
-      />
+      <FamilyEditor key={editing === 'NEW' ? 'new' : editing?.id ?? 'closed'} family={editing && editing !== 'NEW' ? editing : null} isNew={editing === 'NEW'} onClose={() => setEditing(null)} onSaved={updateInvitation} />
+
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="rounded-none border-[#d8d0bf] bg-[#fffaf0]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta familia?</AlertDialogTitle>
+            <AlertDialogDescription>Se eliminarán la familia {deleteTarget?.recipientName ?? ''}, sus integrantes y su enlace de invitación. Esta acción no se puede deshacer.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="rounded-none bg-[#f8f4eb]">
+            <AlertDialogCancel className="rounded-none">Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={savingId === deleteTarget?.id} onClick={(event) => { event.preventDefault(); void deleteFamily(); }} className="rounded-none bg-[#a54e43] hover:bg-[#8f4037]">
+              {savingId === deleteTarget?.id ? 'Eliminando...' : 'Eliminar familia'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }

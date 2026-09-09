@@ -12,7 +12,7 @@ function isGuestEntry(value: unknown): value is GuestImportEntry {
     typeof entry.name === 'string' &&
     typeof entry.source === 'string' &&
     SOURCES.has(entry.source) &&
-    (entry.gender === 'F' || entry.gender === 'M') &&
+    (entry.gender === null || entry.gender === 'F' || entry.gender === 'M') &&
     (entry.color === null || typeof entry.color === 'string')
   );
 }

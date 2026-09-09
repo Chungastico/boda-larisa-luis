@@ -9,12 +9,20 @@ CREATE TABLE IF NOT EXISTS invitations (
   attending_count INTEGER NOT NULL DEFAULT 0 CHECK (attending_count >= 0),
   note TEXT,
   source_label TEXT,
+  cluster_label TEXT,
+  cluster_color TEXT,
+  table_name TEXT,
+  invitation_sent BOOLEAN NOT NULL DEFAULT FALSE,
   responded_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS import_key TEXT;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS cluster_label TEXT;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS cluster_color TEXT;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS table_name TEXT;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS invitation_sent BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE UNIQUE INDEX IF NOT EXISTS invitations_import_key_idx ON invitations(import_key)
   WHERE import_key IS NOT NULL;
 

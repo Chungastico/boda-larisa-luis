@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Heart, Minus, Plus } from 'lucide-react';
 import gsap from 'gsap';
-import type { Invitation, RsvpStatus } from '@/lib/invitations';
+import type { Invitation, RsvpAttendeeInput, RsvpStatus } from '@/lib/invitations';
 
 const weddingDate = new Date('2026-10-04T16:00:00-06:00');
 
@@ -30,6 +30,23 @@ const galleryPages = [
   [galleryPhotos[8], galleryPhotos[9]],
   [galleryPhotos[10], galleryPhotos[11]],
 ] as const;
+
+type FamilyRsvpMode = 'all' | 'partial' | 'declined';
+
+function initialMemberSelection(invitation: Invitation) {
+  return Object.fromEntries(
+    invitation.invitees.map((invitee) => [
+      invitee.id,
+      invitee.isAttending ?? (
+        invitation.status === 'ACCEPTED'
+          ? true
+          : invitation.status === 'DECLINED'
+            ? false
+            : null
+      ),
+    ]),
+  ) as Record<string, boolean | null>;
+}
 
 type WebMcpContext = {
   registerTool: (
@@ -102,6 +119,8 @@ export function InvitationExperience({
 }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const heroImageRef = useRef<HTMLImageElement>(null);
+  const isFamilyInvitation = invitation.invitees.length > 1 || invitation.maxGuests > 1;
+  const hasExistingResponse = invitation.status !== 'PENDING';
   const [decision, setDecision] = useState<RsvpStatus | null>(
     invitation.status === 'PENDING' ? null : invitation.status,
   );
@@ -110,11 +129,27 @@ export function InvitationExperience({
   );
   const [note, setNote] = useState(invitation.note ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [savedStatus, setSavedStatus] = useState<RsvpStatus | null>(null);
+  const [savedStatus, setSavedStatus] = useState<RsvpStatus | null>(hasExistingResponse ? invitation.status : null);
+  const [editPromptOpen, setEditPromptOpen] = useState(hasExistingResponse);
   const [error, setError] = useState('');
+  const [familyMode, setFamilyMode] = useState<FamilyRsvpMode | null>(() => {
+    if (!isFamilyInvitation) return null;
+    if (invitation.status === 'DECLINED') return 'declined';
+    if (invitation.status === 'ACCEPTED') {
+      const hasDeclinedMember = invitation.invitees.some((invitee) => invitee.isAttending === false);
+      return hasDeclinedMember ? 'partial' : 'all';
+    }
+    return null;
+  });
+  const [memberSelection, setMemberSelection] = useState(() => initialMemberSelection(invitation));
 
   const persistRsvp = useCallback(
-    async (status: RsvpStatus, attendingCount: number, message: string) => {
+    async (
+      status: RsvpStatus,
+      attendingCount: number,
+      message: string,
+      attendees?: RsvpAttendeeInput[],
+    ) => {
       const response = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -123,6 +158,7 @@ export function InvitationExperience({
           status,
           attendingCount,
           note: message,
+          attendees,
         }),
       });
       const payload = (await response.json().catch(() => null)) as {
@@ -135,6 +171,7 @@ export function InvitationExperience({
       }
 
       setSavedStatus(status);
+      setEditPromptOpen(false);
       return payload.invitation;
     },
     [invitation.slug],
@@ -239,7 +276,35 @@ export function InvitationExperience({
   }, [invitation.maxGuests, persistRsvp]);
 
   async function submitRsvp() {
-    if (!decision) {
+    if (isFamilyInvitation && !familyMode) {
+      setError('Elige si asistirán todos o si deseas confirmar de forma parcial.');
+      return;
+    }
+
+    if (isFamilyInvitation && familyMode === 'partial') {
+      const missingMember = invitation.invitees.some((invitee) => memberSelection[invitee.id] === null);
+      if (missingMember) {
+        setError('Selecciona quién asistirá y quién no podrá asistir.');
+        return;
+      }
+    }
+
+    const attendees = isFamilyInvitation && invitation.invitees.length
+      ? invitation.invitees.map((invitee) => ({
+          id: invitee.id,
+          isAttending: memberSelection[invitee.id] === true,
+        }))
+      : undefined;
+    const selectedCount = attendees?.filter((attendee) => attendee.isAttending).length ?? guestCount;
+    const resolvedStatus = isFamilyInvitation
+      ? familyMode === 'declined'
+        ? 'DECLINED'
+        : attendees
+          ? selectedCount > 0 ? 'ACCEPTED' : 'DECLINED'
+          : decision
+      : decision;
+
+    if (!resolvedStatus) {
       setError('Selecciona una respuesta para continuar.');
       return;
     }
@@ -248,7 +313,7 @@ export function InvitationExperience({
     setError('');
 
     try {
-      await persistRsvp(decision, guestCount, note);
+      await persistRsvp(resolvedStatus, selectedCount, '', attendees);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -258,6 +323,43 @@ export function InvitationExperience({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  const selectedMemberCount = invitation.invitees.filter((invitee) => memberSelection[invitee.id] === true).length;
+
+  function selectAllFamilyMembers() {
+    setMemberSelection(Object.fromEntries(invitation.invitees.map((invitee) => [invitee.id, true])));
+    setFamilyMode('all');
+    setDecision('ACCEPTED');
+    setGuestCount(invitation.invitees.length || invitation.maxGuests);
+    setSavedStatus(null);
+    setError('');
+  }
+
+  function selectNoFamilyMembers() {
+    setMemberSelection(Object.fromEntries(invitation.invitees.map((invitee) => [invitee.id, false])));
+    setFamilyMode('declined');
+    setDecision('DECLINED');
+    setGuestCount(0);
+    setSavedStatus(null);
+    setError('');
+  }
+
+  function selectFamilyMode(mode: FamilyRsvpMode) {
+    setFamilyMode(mode);
+    setSavedStatus(null);
+    setError('');
+  }
+
+  function updateMemberSelection(id: string, isAttending: boolean) {
+    const nextSelection = { ...memberSelection, [id]: isAttending };
+    const nextCount = Object.values(nextSelection).filter(Boolean).length;
+    setMemberSelection(nextSelection);
+    setFamilyMode('partial');
+    setDecision(nextCount > 0 ? 'ACCEPTED' : 'DECLINED');
+    setGuestCount(nextCount);
+    setSavedStatus(null);
+    setError('');
   }
 
   return (
@@ -366,56 +468,183 @@ export function InvitationExperience({
           </div>
         </section>
 
-        <section id="rsvp" className="story-screen relative isolate flex flex-col justify-center overflow-hidden bg-[#8b9574] px-7 text-center text-[#2a2a1c]">
-          <img src="/figma/photos/sentados-en-piedra.png" alt="" className="absolute inset-0 -z-30 h-full w-full object-cover opacity-35 saturate-[0.55]" loading="lazy" />
-          <div className="absolute inset-0 -z-20 bg-[#8b9574]/65 mix-blend-multiply" />
-          <div data-invitation-reveal>
-            <p className="font-script text-[30px] leading-none">RSVP</p>
-            <p className="mt-3 text-[19px] font-bold">¿Nos acompanaras?</p>
-            <p className="mx-auto mt-4 max-w-[335px] text-[12px] leading-[1.65]">Agradecemos confirmar tu asistencia antes del 15 de septiembre de 2026.</p>
-          </div>
+        <section id="rsvp" className="story-screen relative isolate flex flex-col justify-center overflow-hidden bg-[#d9dfc2] px-7 py-8 text-center text-[#2a2a1c]">
+          <img src="/figma/design/rsvp-background.png" alt="" className="absolute inset-0 z-0 h-full w-full object-cover object-center" />
+          <div data-invitation-reveal className="relative z-10 mx-auto flex w-full max-w-[348px] flex-col items-center">
+            <p className="font-script text-[30px] leading-none text-[#2a2a1c]">Reservación</p>
+            <h2 className="mt-4 text-[22px] font-bold uppercase tracking-[0.2px]">Confirma tu asistencia</h2>
+            <p className="mt-4 text-[12px] leading-[1.55]">
+              Antes del <strong>21 de septiembre de 2026</strong>, por favor.<br />
+              En esta <strong>ocasión</strong>, el evento es solo para <strong>adultos.</strong>
+            </p>
 
-          {savedStatus ? (
-            <div data-invitation-reveal className="mx-auto mt-8 max-w-[348px] border border-[#2a2a1c]/25 bg-[#f4eee2]/90 px-6 py-7">
-              {savedStatus === 'ACCEPTED' ? <Check className="mx-auto" size={28} /> : <Heart className="mx-auto" size={28} />}
-              <p className="font-script mt-4 text-[30px] leading-none">{savedStatus === 'ACCEPTED' ? '¡Te esperamos!' : 'Gracias por avisarnos'}</p>
-              <p className="mt-4 text-[12px] leading-5">Tu respuesta fue registrada para {invitation.recipientName}.</p>
+            <div className="mt-6 w-full">
+              <p className="text-[12px] font-bold uppercase tracking-[1px]">Hemos reservado:</p>
+              <p className="mt-2 text-[25px] font-bold uppercase leading-[1.05]">{invitation.recipientName}</p>
+              <p className="mt-2 text-[14px] italic">{invitation.tableName ?? 'Mesa por asignar'}</p>
+              <p className="mt-3 text-[12px]">
+                {isFamilyInvitation ? `${invitation.maxGuests} espacios para adultos` : '1 espacio para adultos'}
+              </p>
+              <p className="mt-3 text-[11px] leading-4">Aquí puedes modificar el estado de tu invitación.</p>
             </div>
-          ) : (
-            <div data-invitation-reveal className="mx-auto mt-7 w-full max-w-[348px]">
-              <p className="text-[13px] font-bold">Hemos reservado:</p>
-              <p className="mt-1 text-[24px] font-bold leading-tight">{invitation.recipientName}</p>
-              <p className="mt-1 text-[12px]">{invitation.maxGuests} {invitation.maxGuests === 1 ? 'espacio' : 'espacios'} para adultos</p>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => setDecision('ACCEPTED')} className="relative h-[46px] overflow-hidden text-[12px] font-bold uppercase tracking-[0.45px] text-[#f4eee2]">
-                  <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />
-                  <span className="relative">Si, asistire</span>
-                </button>
-                <button type="button" onClick={() => setDecision('DECLINED')} className={`h-[46px] border border-[#2a2a1c] text-[12px] font-bold uppercase tracking-[0.45px] transition-colors ${decision === 'DECLINED' ? 'bg-[#2a2a1c] text-[#f4eee2]' : 'bg-[#f4eee2]/45 text-[#2a2a1c]'}`}>
-                  No podre asistir
+            {savedStatus ? (
+              <div data-invitation-reveal className="mt-5 w-full border border-[#2a2a1c]/25 bg-[#f4eee2]/75 px-5 py-5">
+                {savedStatus === 'ACCEPTED' ? <Check className="mx-auto" size={25} /> : <Heart className="mx-auto" size={25} />}
+                <p className="font-script mt-3 text-[30px] leading-none">
+                  {savedStatus === 'ACCEPTED' ? '¡Te esperamos!' : 'Gracias por avisarnos'}
+                </p>
+                <p className="mt-3 text-[12px] leading-5">
+                  {savedStatus === 'ACCEPTED'
+                    ? `${selectedMemberCount || guestCount} de ${invitation.maxGuests} personas confirmadas.`
+                    : 'La invitación quedó cancelada.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setSavedStatus(null); setError(''); }}
+                  className="mt-5 h-[40px] border border-[#2a2a1c] bg-[#f4eee2]/40 px-5 text-[11px] font-bold uppercase tracking-[0.7px]"
+                >
+                  Modificar respuesta
                 </button>
               </div>
+            ) : (
+              <div className="mt-5 w-full">
+                <p className="text-left text-[12px] font-bold uppercase tracking-[1px]">
+                  {isFamilyInvitation ? '¿Quiénes asistirán?' : '¿Asistirás?'}
+                </p>
 
-              {decision === 'ACCEPTED' && (
-                <div className="mt-4 flex items-center justify-center gap-4 text-[12px]">
-                  <span>Personas que asistiran</span>
-                  <div className="flex h-8 items-center border border-[#2a2a1c] bg-[#f4eee2]/75">
-                    <button type="button" aria-label="Reducir cantidad de asistentes" title="Reducir cantidad" onClick={() => setGuestCount((count) => Math.max(1, count - 1))} className="grid h-full w-8 place-items-center border-r border-[#2a2a1c]/25"><Minus size={14} /></button>
-                    <span className="grid h-full w-8 place-items-center tabular-nums">{guestCount}</span>
-                    <button type="button" aria-label="Aumentar cantidad de asistentes" title="Aumentar cantidad" onClick={() => setGuestCount((count) => Math.min(invitation.maxGuests, count + 1))} className="grid h-full w-8 place-items-center border-l border-[#2a2a1c]/25"><Plus size={14} /></button>
+                {isFamilyInvitation ? (
+                  <>
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        aria-pressed={familyMode === 'all'}
+                        onClick={selectAllFamilyMembers}
+                        className={`relative h-[46px] overflow-hidden text-[11px] font-bold uppercase tracking-[0.35px] text-[#f4eee2] ${familyMode === 'all' ? 'ring-2 ring-[#c7b79c] ring-offset-1 ring-offset-[#d9dfc2]' : ''}`}
+                      >
+                        <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                        <span className="relative">Confirmar todos</span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={familyMode === 'partial'}
+                        onClick={() => selectFamilyMode('partial')}
+                        className={`h-[46px] border border-[#2a2a1c] text-[11px] font-bold uppercase tracking-[0.35px] transition-colors ${familyMode === 'partial' ? 'bg-[#f4eee2] text-[#2a2a1c]' : 'bg-[#f4eee2]/40 text-[#2a2a1c]'}`}
+                      >
+                        Confirmación parcial
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={selectNoFamilyMembers}
+                      className={`mt-3 h-[36px] w-full border border-[#2a2a1c] text-[11px] font-bold uppercase tracking-[0.65px] ${familyMode === 'declined' ? 'bg-[#2a2a1c] text-[#f4eee2]' : 'bg-[#f4eee2]/30 text-[#2a2a1c]'}`}
+                    >
+                      No podremos asistir
+                    </button>
+
+                    {familyMode === 'partial' && (
+                      <div className="mt-3 w-full border border-[#2a2a1c]/25 bg-[#f4eee2]/45 px-3 py-3 text-left">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.7px]">Selecciona por persona</p>
+                        <div className="mt-2 space-y-2">
+                          {invitation.invitees.map((invitee) => (
+                            <div key={invitee.id} className="flex items-center justify-between gap-2 border-b border-[#2a2a1c]/15 pb-2 last:border-0 last:pb-0">
+                              <span className="min-w-0 flex-1 text-[11px] leading-4">{invitee.name}</span>
+                              <div className="grid shrink-0 grid-cols-2 gap-1">
+                                <button
+                                  type="button"
+                                  aria-pressed={memberSelection[invitee.id] === true}
+                                  onClick={() => updateMemberSelection(invitee.id, true)}
+                                  className={`h-[28px] w-[34px] text-[10px] font-bold uppercase ${memberSelection[invitee.id] === true ? 'bg-[#2a2a1c] text-[#f4eee2]' : 'border border-[#2a2a1c]/50 bg-[#f4eee2]/35'}`}
+                                >
+                                  Sí
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-pressed={memberSelection[invitee.id] === false}
+                                  onClick={() => updateMemberSelection(invitee.id, false)}
+                                  className={`h-[28px] w-[34px] text-[10px] font-bold uppercase ${memberSelection[invitee.id] === false ? 'bg-[#8b9574] text-[#2a2a1c]' : 'border border-[#2a2a1c]/50 bg-[#f4eee2]/35'}`}
+                                >
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 text-right text-[11px] font-bold">{selectedMemberCount} de {invitation.invitees.length} asistirán</p>
+                      </div>
+                    )}
+                    {familyMode === 'all' && <p className="mt-3 text-[11px]">Asistirán todos los integrantes de la invitación.</p>}
+                    {familyMode === 'declined' && <p className="mt-3 text-[11px]">No asistirá ningún integrante de la invitación.</p>}
+                  </>
+                ) : (
+                  <>
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        aria-pressed={decision === 'ACCEPTED'}
+                        onClick={() => { setDecision('ACCEPTED'); setSavedStatus(null); setError(''); }}
+                        className="relative h-[46px] overflow-hidden text-[11px] font-bold uppercase tracking-[0.35px] text-[#f4eee2]"
+                      >
+                        <img src="/figma/design/rsvp-yes-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                        <span className="relative">Sí, asistiré</span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={decision === 'DECLINED'}
+                        onClick={() => { setDecision('DECLINED'); setSavedStatus(null); setError(''); }}
+                        className={`h-[46px] border border-[#2a2a1c] text-[11px] font-bold uppercase tracking-[0.35px] transition-colors ${decision === 'DECLINED' ? 'bg-[#2a2a1c] text-[#f4eee2]' : 'bg-[#f4eee2]/40 text-[#2a2a1c]'}`}
+                      >
+                        No podré asistir
+                      </button>
+                    </div>
+
+                    {decision === 'ACCEPTED' && invitation.maxGuests > 1 && (
+                      <div className="mt-4 flex items-center justify-center gap-4 text-[12px]">
+                        <span>Personas que asistirán</span>
+                        <div className="flex h-8 items-center border border-[#2a2a1c] bg-[#f4eee2]/75">
+                          <button type="button" aria-label="Reducir cantidad de asistentes" title="Reducir cantidad" onClick={() => setGuestCount((count) => Math.max(1, count - 1))} className="grid h-full w-8 place-items-center border-r border-[#2a2a1c]/25"><Minus size={14} /></button>
+                          <span className="grid h-full w-8 place-items-center tabular-nums">{guestCount}</span>
+                          <button type="button" aria-label="Aumentar cantidad de asistentes" title="Aumentar cantidad" onClick={() => setGuestCount((count) => Math.min(invitation.maxGuests, count + 1))} className="grid h-full w-8 place-items-center border-l border-[#2a2a1c]/25"><Plus size={14} /></button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {error && <p className="mt-3 text-[12px] font-bold text-[#7d3028]">{error}</p>}
+                <button type="button" onClick={submitRsvp} disabled={isSubmitting} className="relative mt-4 h-[60px] w-full overflow-hidden text-[13px] font-bold uppercase tracking-[0.65px] text-[#f4eee2] disabled:opacity-60">
+                  <img src="/figma/design/rsvp-confirm-button.svg" alt="" className="absolute inset-0 h-full w-full" />
+                  <span className="relative">{isSubmitting ? 'Guardando...' : 'Confirmar asistencia'}</span>
+                </button>
+              </div>
+            )}
+
+            {editPromptOpen && savedStatus && (
+              <div className="absolute inset-0 z-30 grid place-items-center bg-[#2a2a1c]/45 px-7" role="dialog" aria-modal="true" aria-labelledby="rsvp-edit-title">
+                <div className="w-full max-w-[348px] border border-[#2a2a1c]/35 bg-[#f4eee2] px-5 py-6 text-center text-[#2a2a1c] shadow-[0_8px_24px_rgba(42,42,28,0.2)]">
+                  <p id="rsvp-edit-title" className="font-script text-[30px] leading-none">Tu respuesta ya está guardada</p>
+                  <p className="mt-4 text-[12px] leading-5">¿Deseas editar el estado de tu invitación?</p>
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setEditPromptOpen(false); setSavedStatus(null); setError(''); }}
+                      className="h-[44px] bg-[#2a2a1c] px-3 text-[11px] font-bold uppercase tracking-[0.45px] text-[#f4eee2]"
+                    >
+                      Editar respuesta
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEditPromptOpen(false); setError(''); }}
+                      className="h-[44px] border border-[#2a2a1c] bg-[#f4eee2]/45 px-3 text-[11px] font-bold uppercase tracking-[0.45px]"
+                    >
+                      Mantener respuesta
+                    </button>
                   </div>
                 </div>
-              )}
-
-              <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} aria-label="Mensaje o restriccion alimentaria" placeholder="Mensaje o restriccion alimentaria (opcional)" className="mt-4 w-full resize-none border border-[#2a2a1c]/30 bg-[#f4eee2]/75 px-3 py-2 text-[12px] leading-5 outline-none placeholder:text-[#2a2a1c]/60 focus:border-[#2a2a1c]" />
-              {error && <p className="mt-3 text-[12px] font-bold text-[#7d3028]">{error}</p>}
-              <button type="button" onClick={submitRsvp} disabled={isSubmitting} className="relative mt-4 h-[60px] w-full overflow-hidden text-[13px] font-bold uppercase tracking-[0.65px] text-[#f4eee2] disabled:opacity-60">
-                <img src="/figma/design/rsvp-confirm-button.svg" alt="" className="absolute inset-0 h-full w-full" />
-                <span className="relative">{isSubmitting ? 'Guardando...' : 'Confirmar asistencia'}</span>
-              </button>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </section>
 
         {galleryPages.map((photos, pageIndex) => (

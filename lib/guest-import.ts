@@ -11,6 +11,9 @@ export type ImportedInvitation = {
   householdName: string | null;
   maxGuests: number;
   sourceLabel: string;
+  clusterLabel: string | null;
+  clusterColor: string | null;
+  tableName: string | null;
   members: Array<{ name: string; gender: string | null }>;
 };
 
@@ -24,6 +27,16 @@ const colorLabels: Record<string, string> = {
   FF0000: 'Grupo rojo',
 };
 
+const tableNamesByColor: Record<string, string> = {
+  FFFF00: 'Mesa 5',
+  FF99CC: 'Mesa 2',
+  FFCC00: 'Mesa 6',
+  '99CC00': 'Mesa 4',
+  '99CCFF': 'Mesa 1',
+  CC99FF: 'Mesa 3',
+  FF0000: 'Mesa central',
+};
+
 const relationshipAliases: Record<string, string> = {
   gaby: 'gabriela',
 };
@@ -32,6 +45,10 @@ const relationshipPattern = /\((?:novio|novia|esposo|esposa)\s+de\s+([^)]+)\)/i;
 
 function cleanName(value: string) {
   return value.replace(/\s+/g, ' ').trim();
+}
+
+function isRosterHeader(value: string) {
+  return /^invitados\s+(larissa|luis)$/i.test(cleanName(value));
 }
 
 function normalize(value: string) {
@@ -67,9 +84,17 @@ function formatName(value: string) {
     .join(' ');
 }
 
-function sourceLabel(source: GuestImportEntry['source'], color: string | null) {
-  const label = color ? colorLabels[color.toUpperCase()] : null;
-  return label ? `${source} · ${label}` : source;
+function sourceLabel(source: GuestImportEntry['source']) {
+  return source;
+}
+
+function clusterFromColor(color: string | null) {
+  const normalizedColor = color?.toUpperCase() ?? null;
+  return {
+    clusterLabel: normalizedColor ? colorLabels[normalizedColor] ?? null : null,
+    clusterColor: normalizedColor,
+    tableName: normalizedColor ? tableNamesByColor[normalizedColor] ?? null : null,
+  };
 }
 
 function resolveRelationTarget(entries: GuestImportEntry[], index: number) {
@@ -98,7 +123,7 @@ export function buildImportedInvitations(entries: GuestImportEntry[]): ImportedI
       gender: entry.gender?.trim().toUpperCase() ?? null,
       color: entry.color?.toUpperCase() ?? null,
     }))
-    .filter((entry) => entry.name && (entry.gender === 'F' || entry.gender === 'M'));
+    .filter((entry) => entry.name && !isRosterHeader(entry.name));
 
   const parents = normalizedEntries.map((_, index) => index);
   const find = (index: number): number => {
@@ -155,13 +180,15 @@ export function buildImportedInvitations(entries: GuestImportEntry[]): ImportedI
           : members[0].name;
       const memberNames = members.map((member) => normalize(member.name)).sort();
       const importKey = `${members[0].source}:${memberNames.join('|')}`;
+      const placement = clusterFromColor(members[0].color);
 
       return {
         importKey,
         recipientName,
         householdName: members.length > 1 ? recipientName : null,
         maxGuests: members.length,
-        sourceLabel: sourceLabel(members[0].source, members[0].color),
+        sourceLabel: sourceLabel(members[0].source),
+        ...placement,
         members: members.map(({ name, gender }) => ({ name, gender })),
         firstIndex: Math.min(...members.map((member) => member.index)),
       };

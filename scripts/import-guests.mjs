@@ -7,7 +7,7 @@ import { buildImportedInvitations } from '../lib/guest-import.ts';
 
 const XLSX = XLSXModule;
 
-const DEFAULT_FILE = '/Users/chungus/Downloads/Copia de Invitados.xls';
+const DEFAULT_FILE = '/Users/chungus/Downloads/Copia de Invitados (1).xls';
 const sourceFile = resolve(
   process.argv.find((argument) => argument.startsWith('--file='))?.slice(7) ??
     process.env.GUEST_IMPORT_FILE ??
@@ -46,7 +46,7 @@ function readWorkbookRoster(file) {
     const cell = sheet[`${column.letter}${index + 1}`];
     return {
       name: typeof row[column.name] === 'string' ? row[column.name] : '',
-      gender: typeof row[column.gender] === 'string' ? row[column.gender] : null,
+      gender: typeof row[column.gender] === 'string' ? row[column.gender].trim().toUpperCase() : null,
       color: cell?.s?.fgColor?.rgb ?? null,
       source: column.source,
     };
@@ -90,16 +90,21 @@ const sql = neon(databaseUrl);
 for (const invitation of invitations) {
   const current = await sql`
     INSERT INTO invitations (
-      id, import_key, slug, recipient_name, household_name, max_guests, source_label
+        id, import_key, slug, recipient_name, household_name, max_guests, source_label,
+        cluster_label, cluster_color, table_name
     ) VALUES (
       ${invitation.id}, ${invitation.importKey}, ${invitation.slug}, ${invitation.recipientName},
-      ${invitation.householdName}, ${invitation.maxGuests}, ${invitation.sourceLabel}
+      ${invitation.householdName}, ${invitation.maxGuests}, ${invitation.sourceLabel},
+      ${invitation.clusterLabel}, ${invitation.clusterColor}, ${invitation.tableName}
     )
     ON CONFLICT (import_key) DO UPDATE SET
       recipient_name = EXCLUDED.recipient_name,
       household_name = EXCLUDED.household_name,
-      max_guests = EXCLUDED.max_guests,
-      source_label = EXCLUDED.source_label,
+        max_guests = EXCLUDED.max_guests,
+        source_label = EXCLUDED.source_label,
+        cluster_label = EXCLUDED.cluster_label,
+        cluster_color = EXCLUDED.cluster_color,
+        table_name = EXCLUDED.table_name,
       updated_at = NOW()
     RETURNING id
   `;
