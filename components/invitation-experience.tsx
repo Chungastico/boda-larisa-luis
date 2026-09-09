@@ -266,16 +266,16 @@ export function InvitationExperience({
         ref={pageRef}
         className="invitation-scroller mx-auto h-full max-w-[480px] overflow-y-auto bg-[#f4eee2] shadow-2xl"
       >
-        <section id="inicio" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
-          <nav className="relative z-20 grid h-[58px] grid-cols-[34px_repeat(5,minmax(0,1fr))] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
-            <a href="#inicio" aria-label="Inicio" className="grid place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
-            <a href="#bienvenida" className="whitespace-nowrap hover:opacity-60">Bienvenida</a>
-            <a href="#vestimenta" className="whitespace-nowrap hover:opacity-60">Vestimenta</a>
-            <a href="#ubicacion" className="whitespace-nowrap hover:opacity-60">Ubicación</a>
-            <a href="#rsvp" className="whitespace-nowrap hover:opacity-60">RSVP</a>
-            <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galería</a>
-          </nav>
+        <nav className="sticky top-0 z-50 grid h-[58px] grid-cols-[34px_repeat(5,minmax(0,1fr))] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
+          <a href="#inicio" aria-label="Inicio" className="grid place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
+          <a href="#bienvenida" className="whitespace-nowrap hover:opacity-60">Bienvenida</a>
+          <a href="#vestimenta" className="whitespace-nowrap hover:opacity-60">Vestimenta</a>
+          <a href="#ubicacion" className="whitespace-nowrap hover:opacity-60">Ubicación</a>
+          <a href="#rsvp" className="whitespace-nowrap hover:opacity-60">RSVP</a>
+          <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galería</a>
+        </nav>
 
+        <section id="inicio" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
           <div className="relative min-h-[calc(100svh-58px)] overflow-hidden text-center">
             <img
               ref={heroImageRef}

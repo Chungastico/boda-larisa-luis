@@ -115,7 +115,7 @@ select {
 .invitation-scroller {
   scroll-behavior: smooth;
   scroll-snap-type: y mandatory;
-  scroll-padding-top: 0;
+  scroll-padding-top: 58px;
   overscroll-behavior-y: contain;
   scrollbar-width: none;
 }
@@ -125,7 +125,7 @@ select {
 }
 
 .story-screen {
-  min-height: 100svh;
+  min-height: calc(100svh - 58px);
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
