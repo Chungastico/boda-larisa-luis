@@ -400,19 +400,21 @@ function SeatingMap({ table, families }: { table: SeatingTable; families: Invita
 function InvitationActions({
   invitation,
   copied,
+  saving,
   onCopy,
   onEdit,
   onDelete,
 }: {
   invitation: Invitation;
   copied: boolean;
+  saving: boolean;
   onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
     <div className="flex flex-wrap justify-end gap-1">
-      <Button variant="ghost" size="icon-sm" title={copied ? 'Enlace copiado' : 'Copiar enlace'} className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label={copied ? 'Enlace copiado' : 'Copiar enlace de invitación'} onClick={onCopy}><Clipboard size={16} /></Button>
+      <Button variant="ghost" size="icon-sm" title={copied ? 'Enlace copiado' : 'Copiar enlace'} className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label={copied ? 'Enlace copiado' : 'Copiar enlace de invitación'} disabled={saving} onClick={onCopy}><Clipboard size={16} /></Button>
       <a href={'/i/' + invitation.slug} target="_blank" rel="noreferrer" title="Abrir invitación" aria-label="Abrir invitación" className="inline-flex size-7 items-center justify-center text-[#5c614d] hover:bg-[#ece6da]"><ExternalLink size={16} /></a>
       <Button variant="ghost" size="icon-sm" title="Editar familia" className="rounded-none text-[#5c614d] hover:bg-[#ece6da]" aria-label="Editar familia" onClick={onEdit}><Pencil size={16} /></Button>
       <Button variant="ghost" size="icon-sm" title="Eliminar familia" className="rounded-none text-[#a54e43] hover:bg-[#f6e3df]" aria-label="Eliminar familia" onClick={onDelete}><Trash2 size={16} /></Button>
@@ -495,9 +497,18 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
   }
 
   async function copyLink(invitation: Invitation) {
-    await navigator.clipboard.writeText(window.location.origin + '/i/' + invitation.slug);
-    setCopiedId(invitation.id);
-    window.setTimeout(() => setCopiedId(null), 1_800);
+    setImportError('');
+    try {
+      await navigator.clipboard.writeText(window.location.origin + '/i/' + invitation.slug);
+      setCopiedId(invitation.id);
+      window.setTimeout(() => setCopiedId(null), 1_800);
+
+      if (!invitation.invitationSent) {
+        await toggleInvitationSent(invitation, true);
+      }
+    } catch (copyError) {
+      setImportError(copyError instanceof Error ? copyError.message : 'No se pudo copiar el enlace.');
+    }
   }
 
   async function toggleInvitationSent(invitation: Invitation, checked: boolean) {
@@ -724,7 +735,7 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
                             <p className="mt-1 text-xs text-[#6e735f]">{formatResponseDate(invitation.respondedAt)}</p>
                           </TableCell>
                           <TableCell className="px-3 py-3">
-                            <InvitationActions invitation={invitation} copied={copiedId === invitation.id} onCopy={() => void copyLink(invitation)} onEdit={() => setEditing(invitation)} onDelete={() => setDeleteTarget(invitation)} />
+                            <InvitationActions invitation={invitation} copied={copiedId === invitation.id} saving={savingId === invitation.id} onCopy={() => void copyLink(invitation)} onEdit={() => setEditing(invitation)} onDelete={() => setDeleteTarget(invitation)} />
                           </TableCell>
                         </TableRow>
                       )) : (
@@ -754,7 +765,7 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
                           <Switch size="sm" checked={invitation.invitationSent} disabled={savingId === invitation.id} onCheckedChange={(checked) => void toggleInvitationSent(invitation, checked)} aria-label={'Invitación enviada a ' + invitation.recipientName} />
                           Invitación {invitation.invitationSent ? 'enviada' : 'sin enviar'}
                         </label>
-                        <InvitationActions invitation={invitation} copied={copiedId === invitation.id} onCopy={() => void copyLink(invitation)} onEdit={() => setEditing(invitation)} onDelete={() => setDeleteTarget(invitation)} />
+                        <InvitationActions invitation={invitation} copied={copiedId === invitation.id} saving={savingId === invitation.id} onCopy={() => void copyLink(invitation)} onEdit={() => setEditing(invitation)} onDelete={() => setDeleteTarget(invitation)} />
                       </div>
                     </article>
                   )) : (
