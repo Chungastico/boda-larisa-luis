@@ -134,6 +134,14 @@ select {
   );
 }
 
+/* On mobile, use the current dynamic viewport instead of a stale visualViewport
+ * measurement. This keeps each story screen aligned with the visible browser area. */
+@media (max-width: 767px) {
+  .invitation-shell {
+    --invitation-viewport-height: 100dvh;
+  }
+}
+
 .invitation-nav-links {
   overflow-x: auto;
   scrollbar-width: none;
@@ -214,6 +222,26 @@ select {
 
 .countdown-clock {
   top: 81.4%;
+}
+
+.hero-stage {
+  isolation: isolate;
+}
+
+.hero-image {
+  z-index: 0;
+}
+
+.hero-veil {
+  z-index: 1;
+}
+
+.hero-date,
+.hero-larissa,
+.hero-ampersand,
+.hero-luis,
+.hero-signoff {
+  z-index: 2;
 }
 
 @media (min-width: 768px) {
