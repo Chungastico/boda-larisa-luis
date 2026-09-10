@@ -289,14 +289,17 @@ select {
   clip-path: polygon(0 0, 100% 0, 100% 90%, 88% 100%, 0 100%);
 }
 
-/* The dress-code composition is authored at a 480px canvas in Figma. */
+/* The Figma composition is taller than a short viewport and must not be compressed. */
 .dress-screen {
   container-type: size;
+  height: max(var(--invitation-section-height), 185.8333cqw);
+  min-height: max(var(--invitation-section-height), 185.8333cqw);
+  max-height: none;
 }
 
 .dress-photo,
 .dress-veil {
-  height: min(102.0833cqw, 61.64%);
+  height: min(116.6667cqw, 70.45%);
 }
 
 .dress-veil {
@@ -304,9 +307,20 @@ select {
   mix-blend-mode: multiply;
 }
 
+.dress-screen::after {
+  position: absolute;
+  z-index: 15;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  top: calc(min(104.375cqw, 63.02%) + min(10.3819cqw, 6.27%));
+  content: '';
+  background: #f4eee2;
+}
+
 .dress-card {
-  top: min(89.5833cqw, 54.08%);
-  height: min(78.125cqw, 47.16%);
+  top: min(104.375cqw, 63.02%);
+  height: min(67.7083cqw, 40.88%);
 }
 
 .dress-script,
@@ -320,7 +334,7 @@ select {
 }
 
 .dress-script {
-  top: min(105.625cqw, 63.77%);
+  top: min(120.2083cqw, 72.58%);
   width: 100%;
   font-size: min(6.25cqw, 30px);
   font-weight: 400;
@@ -328,14 +342,14 @@ select {
 }
 
 .dress-title {
-  top: min(117.5cqw, 70.95%);
+  top: min(132.0833cqw, 79.76%);
   width: 100%;
   font-size: min(4.5833cqw, 22px);
   line-height: normal;
 }
 
 .dress-copy {
-  top: min(129.1667cqw, 78.62%);
+  top: min(143.75cqw, 86.8%);
   left: 50.7292%;
   width: 85.2083%;
   font-size: min(2.8125cqw, 13.5px);
@@ -347,7 +361,7 @@ select {
 }
 
 .dress-inspo-button {
-  top: min(147.9167cqw, 89.24%);
+  top: min(162.5cqw, 98%);
   display: grid;
   width: min(38.3333cqw, 184px);
   aspect-ratio: 184 / 54;
@@ -364,18 +378,10 @@ select {
 }
 
 .dress-adults-note {
-  top: min(163.125cqw, 98.04%);
+  top: min(177.7083cqw, 107%);
   width: 85.2083%;
   font-size: min(3.125cqw, 15px);
   line-height: normal;
-}
-
-/* Keep the complete card inside short, wide mobile viewports as well. */
-@container (min-width: 450px) and (max-height: 830px) {
-  .dress-content {
-    transform: scaleY(0.91);
-    transform-origin: top center;
-  }
 }
 
 @media (max-width: 767px) {
@@ -402,38 +408,4 @@ select {
     bottom: var(--invitation-countdown-bottom-space);
   }
 
-  .dress-photo,
-  .dress-veil {
-    height: 50%;
-  }
-
-  .dress-card {
-    top: 46%;
-    height: 60%;
-  }
-
-  .dress-script {
-    top: 52%;
-  }
-
-  .dress-title {
-    top: 58%;
-  }
-
-  .dress-copy {
-    top: 64%;
-    line-height: 1.55;
-  }
-
-  .dress-inspo-button {
-    top: auto;
-    bottom: calc(var(--invitation-countdown-bottom-space) + 40px);
-  }
-
-  .dress-adults-note {
-    top: auto;
-    bottom: var(--invitation-screen-bottom-space);
-    width: 90%;
-    line-height: 1.25;
-  }
 }
