@@ -152,6 +152,27 @@ export function InvitationExperience({
   });
   const [memberSelection, setMemberSelection] = useState(() => initialMemberSelection(invitation));
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const visualViewport = window.visualViewport;
+    const updateViewportHeight = () => {
+      const height = visualViewport?.height ?? window.innerHeight;
+      root.style.setProperty('--invitation-browser-height', `${Math.round(height)}px`);
+    };
+
+    updateViewportHeight();
+    visualViewport?.addEventListener('resize', updateViewportHeight);
+    visualViewport?.addEventListener('scroll', updateViewportHeight);
+    window.addEventListener('resize', updateViewportHeight);
+
+    return () => {
+      visualViewport?.removeEventListener('resize', updateViewportHeight);
+      visualViewport?.removeEventListener('scroll', updateViewportHeight);
+      window.removeEventListener('resize', updateViewportHeight);
+      root.style.removeProperty('--invitation-browser-height');
+    };
+  }, []);
+
   const persistRsvp = useCallback(
     async (
       status: RsvpStatus,
@@ -420,18 +441,22 @@ export function InvitationExperience({
   }
 
   return (
-    <main className="invitation-shell h-[100dvh] overflow-hidden bg-[#24291e] md:p-5">
+    <main className="invitation-shell overflow-hidden bg-[#24291e] md:p-5">
       <div
         ref={pageRef}
         className="invitation-scroller mx-auto h-full max-w-[480px] overflow-y-auto bg-[#f4eee2] shadow-2xl"
       >
-        <nav className="sticky top-0 z-50 grid h-[var(--invitation-nav-height)] grid-cols-[34px_repeat(5,minmax(0,1fr))] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
-          <a href="#inicio" aria-label="Inicio" className="grid place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
-          <a href="#bienvenida" className="whitespace-nowrap hover:opacity-60">Bienvenida</a>
-          <a href="#vestimenta" className="whitespace-nowrap hover:opacity-60">Vestimenta</a>
-          <a href="#ubicacion" className="whitespace-nowrap hover:opacity-60">Ubicación</a>
-          <a href="#rsvp" className="whitespace-nowrap hover:opacity-60">RSVP</a>
-          <a href="#galeria" className="whitespace-nowrap hover:opacity-60">Galería</a>
+        <nav aria-label="Secciones de la invitación" className="invitation-nav sticky top-0 z-50 flex h-[var(--invitation-nav-height)] items-center border-b border-[#2a2a1c]/15 bg-[#c7b79c] px-3 text-center text-[8px] font-bold uppercase tracking-[0.4px] text-[#2a2a1c]">
+          <a href="#inicio" aria-label="Inicio" className="grid h-full w-8 shrink-0 place-items-center"><img src="/figma/design/navbar-mark.svg" alt="" className="h-7 w-6" /></a>
+          <div className="invitation-nav-links min-w-0 flex-1">
+            <div className="flex min-w-max items-center justify-between gap-3 px-1">
+              <a href="#bienvenida" className="shrink-0 whitespace-nowrap px-1 py-3 hover:opacity-60">Bienvenida</a>
+              <a href="#vestimenta" className="shrink-0 whitespace-nowrap px-1 py-3 hover:opacity-60">Vestimenta</a>
+              <a href="#ubicacion" className="shrink-0 whitespace-nowrap px-1 py-3 hover:opacity-60">Ubicación</a>
+              <a href="#rsvp" className="shrink-0 whitespace-nowrap px-1 py-3 hover:opacity-60">RSVP</a>
+              <a href="#galeria" className="shrink-0 whitespace-nowrap px-1 py-3 hover:opacity-60">Galería</a>
+            </div>
+          </div>
         </nav>
 
         <section id="inicio" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
@@ -444,12 +469,12 @@ export function InvitationExperience({
             />
             <div className="absolute inset-0 -z-20 bg-[#1d2118]/[0.12]" />
 
-            <p data-invitation-reveal className="absolute left-1/2 top-[40px] w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
+            <p data-invitation-reveal className="absolute left-1/2 top-[5.1%] w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
             <h1 className="sr-only">Larissa y Luis</h1>
-            <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="absolute left-[38.125%] top-[421px] h-auto w-[51.4583%] -translate-x-1/2" />
-            <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="absolute left-1/2 top-[514px] h-auto w-[11.4583%] -translate-x-1/2" />
-            <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="absolute left-[63.5417%] top-[573px] h-auto w-[35.2083%] -translate-x-1/2" />
-            <p data-invitation-reveal className="absolute left-1/2 top-[706px] w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
+            <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="absolute left-[38.125%] top-[53.63%] h-auto w-[51.4583%] -translate-x-1/2" />
+            <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="absolute left-1/2 top-[65.48%] h-auto w-[11.4583%] -translate-x-1/2" />
+            <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="absolute left-[63.5417%] top-[72.99%] h-auto w-[35.2083%] -translate-x-1/2" />
+            <p data-invitation-reveal className="absolute left-1/2 top-[89.94%] w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
           </div>
         </section>
 
@@ -460,12 +485,12 @@ export function InvitationExperience({
             data-invitation-reveal
             src="/figma/type/countdown-title.svg"
             alt=""
-            className="absolute left-[40.2083%] top-[435px] h-auto w-[281px] max-w-[72%] -translate-x-1/2 scale-x-[0.82]"
+            className="absolute left-[40.2083%] top-[55.4%] h-auto w-[281px] max-w-[72%] -translate-x-1/2 scale-x-[0.82]"
           />
-          <p data-invitation-reveal className="absolute left-[61.6667%] top-[535px] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-normal">
+          <p data-invitation-reveal className="absolute left-[61.6667%] top-[68.15%] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-normal">
             Falta poco
           </p>
-          <div data-invitation-reveal className="absolute inset-x-0 top-[639px] px-4"><Countdown /></div>
+          <div data-invitation-reveal className="absolute inset-x-0 top-[81.4%] px-4"><Countdown /></div>
         </section>
 
         <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">

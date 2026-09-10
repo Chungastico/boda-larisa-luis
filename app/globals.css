@@ -122,19 +122,26 @@ select {
 }
 
 .invitation-shell {
-  height: 100svh;
+  height: var(--invitation-viewport-height);
+  min-height: var(--invitation-viewport-height);
   --invitation-nav-height: 58px;
-  --invitation-viewport-height: 100svh;
+  --invitation-viewport-height: min(
+    100svh,
+    var(--invitation-browser-height, 100svh)
+  );
   --invitation-section-height: calc(
     var(--invitation-viewport-height) - var(--invitation-nav-height)
   );
 }
 
-@supports (height: 100dvh) {
-  .invitation-shell {
-    height: 100dvh;
-    --invitation-viewport-height: 100dvh;
-  }
+.invitation-nav-links {
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.invitation-nav-links::-webkit-scrollbar {
+  display: none;
 }
 
 .invitation-scroller {
@@ -179,15 +186,10 @@ select {
 
 @media (min-width: 768px) {
   .invitation-shell {
-    --invitation-viewport-height: calc(100svh - 40px);
-  }
-}
-
-@supports (height: 100dvh) {
-  @media (min-width: 768px) {
-    .invitation-shell {
-      --invitation-viewport-height: calc(100dvh - 40px);
-    }
+    --invitation-viewport-height: min(
+      calc(100svh - 40px),
+      calc(var(--invitation-browser-height, 100svh) - 40px)
+    );
   }
 }
 
