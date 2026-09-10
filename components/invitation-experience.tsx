@@ -469,12 +469,12 @@ export function InvitationExperience({
             />
             <div className="absolute inset-0 -z-20 bg-[#1d2118]/[0.12]" />
 
-            <p data-invitation-reveal className="absolute left-1/2 top-[5.1%] w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
+            <p data-invitation-reveal className="hero-date absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
             <h1 className="sr-only">Larissa y Luis</h1>
-            <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="absolute left-[38.125%] top-[53.63%] h-auto w-[51.4583%] -translate-x-1/2" />
-            <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="absolute left-1/2 top-[65.48%] h-auto w-[11.4583%] -translate-x-1/2" />
-            <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="absolute left-[63.5417%] top-[72.99%] h-auto w-[35.2083%] -translate-x-1/2" />
-            <p data-invitation-reveal className="absolute left-1/2 top-[89.94%] w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
+            <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="hero-larissa absolute left-[38.125%] h-auto w-[51.4583%] -translate-x-1/2" />
+            <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="hero-ampersand absolute left-1/2 h-auto w-[11.4583%] -translate-x-1/2" />
+            <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="hero-luis absolute left-[63.5417%] h-auto w-[35.2083%] -translate-x-1/2" />
+            <p data-invitation-reveal className="hero-signoff absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
           </div>
         </section>
 
@@ -485,12 +485,12 @@ export function InvitationExperience({
             data-invitation-reveal
             src="/figma/type/countdown-title.svg"
             alt=""
-            className="absolute left-[40.2083%] top-[55.4%] h-auto w-[281px] max-w-[72%] -translate-x-1/2 scale-x-[0.82]"
+            className="countdown-title absolute left-[40.2083%] h-auto w-[281px] max-w-[72%] -translate-x-1/2 scale-x-[0.82]"
           />
-          <p data-invitation-reveal className="absolute left-[61.6667%] top-[68.15%] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-normal">
+          <p data-invitation-reveal className="countdown-prompt absolute left-[61.6667%] -translate-x-1/2 whitespace-nowrap text-[26px] font-bold uppercase tracking-normal">
             Falta poco
           </p>
-          <div data-invitation-reveal className="absolute inset-x-0 top-[81.4%] px-4"><Countdown /></div>
+          <div data-invitation-reveal className="countdown-clock absolute inset-x-0 px-4"><Countdown /></div>
         </section>
 
         <section id="bienvenida" className="story-screen flex flex-col items-center justify-center bg-[#8b9574] px-7 text-center text-[#2a2a1c]">

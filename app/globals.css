@@ -184,6 +184,38 @@ select {
   display: none;
 }
 
+.hero-date {
+  top: 5.1%;
+}
+
+.hero-larissa {
+  top: 53.63%;
+}
+
+.hero-ampersand {
+  top: 65.48%;
+}
+
+.hero-luis {
+  top: 72.99%;
+}
+
+.hero-signoff {
+  top: 89.94%;
+}
+
+.countdown-title {
+  top: 55.4%;
+}
+
+.countdown-prompt {
+  top: 68.15%;
+}
+
+.countdown-clock {
+  top: 81.4%;
+}
+
 @media (min-width: 768px) {
   .invitation-shell {
     --invitation-viewport-height: min(
@@ -315,5 +347,65 @@ select {
   .dress-content {
     transform: scaleY(0.91);
     transform-origin: top center;
+  }
+}
+
+@media (max-width: 767px) {
+  .invitation-shell {
+    --invitation-screen-bottom-space: clamp(40px, 5svh, 60px);
+    --invitation-countdown-bottom-space: clamp(76px, 9svh, 96px);
+  }
+
+  .hero-signoff {
+    top: auto;
+    bottom: var(--invitation-screen-bottom-space);
+  }
+
+  .countdown-title {
+    top: 49%;
+  }
+
+  .countdown-prompt {
+    top: 61.5%;
+  }
+
+  .countdown-clock {
+    top: auto;
+    bottom: var(--invitation-countdown-bottom-space);
+  }
+
+  .dress-photo,
+  .dress-veil {
+    height: 56%;
+  }
+
+  .dress-card {
+    top: 52%;
+    height: 54%;
+  }
+
+  .dress-script {
+    top: 58%;
+  }
+
+  .dress-title {
+    top: 64%;
+  }
+
+  .dress-copy {
+    top: 70%;
+    line-height: 1.55;
+  }
+
+  .dress-inspo-button {
+    top: auto;
+    bottom: var(--invitation-countdown-bottom-space);
+  }
+
+  .dress-adults-note {
+    top: auto;
+    bottom: var(--invitation-screen-bottom-space);
+    width: 90%;
+    line-height: 1.25;
   }
 }
