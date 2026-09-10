@@ -460,14 +460,14 @@ export function InvitationExperience({
         </nav>
 
         <section id="inicio" className="story-screen relative isolate overflow-hidden bg-[#2a2a1c] text-[#f4eee2]">
-          <div className="relative h-full overflow-hidden text-center">
+          <div className="hero-stage relative h-full overflow-hidden text-center">
             <img
               ref={heroImageRef}
               src="/figma/hero-1.png"
               alt="Larissa y Luis frente a la iglesia"
-              className="absolute inset-0 -z-30 h-full w-full object-cover object-center"
+              className="hero-image absolute inset-0 h-full w-full object-cover object-center"
             />
-            <div className="absolute inset-0 -z-20 bg-[#1d2118]/[0.12]" />
+            <div className="hero-veil pointer-events-none absolute inset-0 bg-[#1d2118]/[0.12]" />
 
             <p data-invitation-reveal className="hero-date absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
             <h1 className="sr-only">Larissa y Luis</h1>
@@ -703,6 +703,10 @@ export function InvitationExperience({
                 </button>
               </div>
             )}
+
+            <p className="mt-5 max-w-[312px] text-[18px] leading-[1.35] italic text-[#2a2a1c]/85">
+              Agradecemos tus muestras de cariño en regalo de sobre
+            </p>
 
           </div>
         </section>
