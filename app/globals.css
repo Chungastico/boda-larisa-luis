@@ -257,8 +257,8 @@ select {
 @media (min-width: 768px) {
   .invitation-shell {
     --invitation-viewport-height: min(
-      calc(100svh - 40px),
-      calc(var(--invitation-browser-height, 100svh) - 40px)
+      calc(100svh - 80px),
+      calc(var(--invitation-browser-height, 100svh) - 80px)
     );
   }
 }
