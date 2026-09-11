@@ -313,6 +313,10 @@ select {
   height: min(102.0833cqw, 61.64%);
 }
 
+.dress-photo.object-center {
+  object-position: center bottom;
+}
+
 .dress-veil {
   background: rgb(42 42 28 / 55%);
   mix-blend-mode: multiply;
