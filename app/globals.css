@@ -273,6 +273,10 @@ select {
   box-shadow: 0 6px 16px rgb(42 42 28 / 8%);
 }
 
+.gallery-photo-sunset {
+  object-position: center bottom;
+}
+
 .gallery-frame-arch-top {
   border-radius: 62px 62px 0 0;
 }

@@ -726,7 +726,12 @@ export function InvitationExperience({
                 }}
                 className={`gallery-card gallery-frame-${photo.frame} h-full will-change-transform`}
               >
-                <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  loading="lazy"
+                  className={`h-full w-full object-cover ${photo.src === '/figma/photos/playa-negro.png' ? 'gallery-photo-sunset' : ''}`}
+                />
               </figure>
             ))}
           </div>
