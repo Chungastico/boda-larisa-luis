@@ -115,6 +115,11 @@ select {
   font-synthesis: none;
 }
 
+.section-script-title {
+  font-size: 30px;
+  line-height: 1;
+}
+
 .paper-texture {
   background-color: #f4eee2;
   background-image: radial-gradient(#dad2c2 0.7px, transparent 0.7px);
@@ -340,9 +345,6 @@ select {
 .dress-script {
   top: min(120.2083cqw, 72.58%);
   width: 100%;
-  font-size: min(6.25cqw, 30px);
-  font-weight: 400;
-  line-height: normal;
 }
 
 .dress-title {
