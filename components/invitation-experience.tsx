@@ -510,7 +510,7 @@ export function InvitationExperience({
             <p className="font-script text-[30px] leading-none text-[#8b9574]">Ceremonia civil</p>
             <p className="mt-4 text-[21px] font-bold">7:00 - 10:00 AM</p>
             <div className="mx-auto mt-7 h-px w-20 bg-[#c7b79c]" />
-            <p className="mt-7 text-[13px] leading-[1.75]">
+            <p className="mt-7 text-[15px] leading-[1.65]">
               La ceremonia civil se realizará en un ambiente íntimo, seguida de un desayuno para celebrar los primeros minutos como esposos. Un momento sencillo, cercano y lleno de cariño.
             </p>
           </div>

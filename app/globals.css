@@ -356,7 +356,7 @@ select {
   top: min(143.75cqw, 86.8%);
   left: 50.7292%;
   width: 85.2083%;
-  font-size: min(2.8125cqw, 13.5px);
+  font-size: min(3.25cqw, 15px);
   line-height: 1.75;
 }
 
@@ -384,7 +384,7 @@ select {
 .dress-adults-note {
   top: min(177.7083cqw, 107%);
   width: 85.2083%;
-  font-size: min(3.125cqw, 15px);
+  font-size: min(3.5cqw, 16px);
   line-height: normal;
 }
 
