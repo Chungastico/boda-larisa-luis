@@ -704,7 +704,7 @@ export function InvitationExperience({
               </div>
             )}
 
-            <p className="mt-5 max-w-[312px] text-[18px] leading-[1.35] italic text-[#2a2a1c]/85">
+            <p className="mt-5 max-w-[330px] text-[20px] leading-[1.35] italic text-[#2a2a1c]/85">
               Agradecemos tus muestras de cariño en regalo de sobre
             </p>
 
