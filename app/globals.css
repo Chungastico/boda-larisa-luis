@@ -301,14 +301,11 @@ select {
 /* The Figma composition is taller than a short viewport and must not be compressed. */
 .dress-screen {
   container-type: size;
-  height: max(var(--invitation-section-height), 185.8333cqw);
-  min-height: max(var(--invitation-section-height), 185.8333cqw);
-  max-height: none;
 }
 
 .dress-photo,
 .dress-veil {
-  height: min(116.6667cqw, 70.45%);
+  height: min(102.0833cqw, 61.64%);
 }
 
 .dress-veil {
@@ -322,14 +319,14 @@ select {
   right: 0;
   bottom: 0;
   left: 0;
-  top: calc(min(104.375cqw, 63.02%) + min(10.3819cqw, 6.27%));
+  top: calc(min(89.5833cqw, 54.08%) + min(10.3819cqw, 6.27%));
   content: '';
   background: #f4eee2;
 }
 
 .dress-card {
-  top: min(104.375cqw, 63.02%);
-  height: min(67.7083cqw, 40.88%);
+  top: min(89.5833cqw, 54.08%);
+  height: min(78.125cqw, 47.16%);
 }
 
 .dress-script,
@@ -343,19 +340,19 @@ select {
 }
 
 .dress-script {
-  top: min(120.2083cqw, 72.58%);
+  top: min(105.625cqw, 63.77%);
   width: 100%;
 }
 
 .dress-title {
-  top: min(132.0833cqw, 79.76%);
+  top: min(117.5cqw, 70.95%);
   width: 100%;
   font-size: min(4.5833cqw, 22px);
   line-height: normal;
 }
 
 .dress-copy {
-  top: min(143.75cqw, 86.8%);
+  top: min(129.1667cqw, 78.62%);
   left: 50.7292%;
   width: 85.2083%;
   font-size: min(3.25cqw, 15px);
@@ -367,7 +364,7 @@ select {
 }
 
 .dress-inspo-button {
-  top: min(162.5cqw, 98%);
+  top: min(147.9167cqw, 89.24%);
   display: grid;
   width: min(38.3333cqw, 184px);
   aspect-ratio: 184 / 54;
@@ -384,7 +381,7 @@ select {
 }
 
 .dress-adults-note {
-  top: min(177.7083cqw, 107%);
+  top: min(163.125cqw, 98.04%);
   width: 85.2083%;
   font-size: min(3.5cqw, 16px);
   line-height: normal;
