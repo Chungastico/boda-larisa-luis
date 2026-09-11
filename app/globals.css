@@ -98,6 +98,10 @@ body {
   font-family: var(--font-sans);
 }
 
+body:has(.invitation-shell) {
+  background: #24291e;
+}
+
 button,
 input,
 textarea,
@@ -233,8 +237,9 @@ select {
   isolation: isolate;
 }
 
-.hero-image {
+.hero-image.object-center {
   z-index: 0;
+  object-position: center 58%;
 }
 
 .hero-veil {
