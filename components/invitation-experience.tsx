@@ -295,7 +295,7 @@ export function InvitationExperience({
           {
             name: 'confirm_wedding_rsvp',
             title: 'Confirmar RSVP',
-            description: 'Registra la confirmacion o declinacion de esta invitacion de boda.',
+            description: 'Registra la confirmación o declinación de esta invitación de boda.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -511,7 +511,7 @@ export function InvitationExperience({
             <p className="mt-4 text-[21px] font-bold">7:00 - 10:00 AM</p>
             <div className="mx-auto mt-7 h-px w-20 bg-[#c7b79c]" />
             <p className="mt-7 text-[13px] leading-[1.75]">
-              La ceremonia civil se realizara en un ambiente intimo, seguida de un desayuno para celebrar los primeros minutos como esposos. Un momento sencillo, cercano y lleno de carino.
+              La ceremonia civil se realizará en un ambiente íntimo, seguida de un desayuno para celebrar los primeros minutos como esposos. Un momento sencillo, cercano y lleno de cariño.
             </p>
           </div>
         </section>

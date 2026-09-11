@@ -24,11 +24,11 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json().catch(() => null)) as { entries?: unknown } | null;
   if (!Array.isArray(body?.entries) || !body.entries.length || body.entries.length > 500) {
-    return NextResponse.json({ error: 'El archivo no contiene una lista valida de invitados.' }, { status: 400 });
+    return NextResponse.json({ error: 'El archivo no contiene una lista válida de invitados.' }, { status: 400 });
   }
 
   if (!body.entries.every(isGuestEntry)) {
-    return NextResponse.json({ error: 'El archivo tiene filas con un formato no valido.' }, { status: 400 });
+    return NextResponse.json({ error: 'El archivo tiene filas con un formato no válido.' }, { status: 400 });
   }
 
   try {

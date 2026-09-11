@@ -68,7 +68,7 @@ export async function PATCH(
   const invitation = await updateInvitationDetails(id, family);
 
   if (!invitation) {
-    return NextResponse.json({ error: 'Invitacion no encontrada.' }, { status: 404 });
+    return NextResponse.json({ error: 'Invitación no encontrada.' }, { status: 404 });
   }
 
   return NextResponse.json({ invitation });

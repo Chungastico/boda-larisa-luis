@@ -21,7 +21,7 @@ function getMetadataBase() {
 
 export const metadata: Metadata = {
   title: 'Larissa & Luis | 4 de octubre de 2026',
-  description: 'Invitacion de boda de Larissa y Luis.',
+  description: 'Invitación de boda de Larissa y Luis.',
   metadataBase: getMetadataBase(),
   openGraph: {
     title: 'Larissa & Luis',
