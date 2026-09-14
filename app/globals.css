@@ -341,7 +341,6 @@ select {
 .dress-script,
 .dress-title,
 .dress-copy,
-.dress-inspo-button,
 .dress-adults-note {
   position: absolute;
   left: 50%;
@@ -370,23 +369,6 @@ select {
 
 .dress-copy p {
   margin: 0;
-}
-
-.dress-inspo-button {
-  top: min(147.9167cqw, 89.24%);
-  display: grid;
-  width: min(38.3333cqw, 184px);
-  aspect-ratio: 184 / 54;
-  place-items: center;
-  color: #2a2a1c;
-  font-size: min(2.5cqw, 12px);
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-
-.dress-inspo-button:hover {
-  filter: brightness(0.95);
 }
 
 .dress-adults-note {

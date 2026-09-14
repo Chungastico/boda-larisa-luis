@@ -527,10 +527,6 @@ export function InvitationExperience({
               <p>Pedimos a nuestros invitados vestir de etiqueta semi-formal.</p>
               <p>Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</p>
             </div>
-            <a href="https://pin.it/4PcnHhnvF" target="_blank" rel="noreferrer" aria-label="Ver inspiración de vestimenta en Pinterest" className="dress-inspo-button">
-              <img src="/figma/design/map-button.svg" alt="" className="absolute inset-0 h-full w-full" />
-              <span className="relative">Ver inspo</span>
-            </a>
             <p className="dress-adults-note font-bold">En esta ocasión, el evento es solo para adultos.</p>
           </div>
         </section>
