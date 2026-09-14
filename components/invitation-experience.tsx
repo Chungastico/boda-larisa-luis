@@ -469,12 +469,12 @@ export function InvitationExperience({
             />
             <div className="hero-veil pointer-events-none absolute inset-0 bg-[#1d2118]/[0.12]" />
 
-            <p data-invitation-reveal className="hero-date absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
+            <p className="hero-date absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-normal tracking-[5px] text-[#f4eee2]">4 · 10 · 2026</p>
             <h1 className="sr-only">Larissa y Luis</h1>
-            <img data-invitation-reveal src="/figma/type/larissa.svg" alt="" className="hero-larissa absolute left-[38.125%] h-auto w-[51.4583%] -translate-x-1/2" />
-            <img data-invitation-reveal src="/figma/type/ampersand.svg" alt="" className="hero-ampersand absolute left-1/2 h-auto w-[11.4583%] -translate-x-1/2" />
-            <img data-invitation-reveal src="/figma/type/luis.svg" alt="" className="hero-luis absolute left-[63.5417%] h-auto w-[35.2083%] -translate-x-1/2" />
-            <p data-invitation-reveal className="hero-signoff absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
+            <img src="/figma/type/larissa.svg" alt="" className="hero-larissa absolute left-[38.125%] h-auto w-[51.4583%] -translate-x-1/2" />
+            <img src="/figma/type/ampersand.svg" alt="" className="hero-ampersand absolute left-1/2 h-auto w-[11.4583%] -translate-x-1/2" />
+            <img src="/figma/type/luis.svg" alt="" className="hero-luis absolute left-[63.5417%] h-auto w-[35.2083%] -translate-x-1/2" />
+            <p className="hero-signoff absolute left-1/2 w-full -translate-x-1/2 text-[20px] font-bold uppercase tracking-[4px] text-[#c7b79c]">Nos casamos</p>
           </div>
         </section>
 
@@ -557,7 +557,6 @@ export function InvitationExperience({
             <div className="mt-6 w-full">
               <p className="text-[12px] font-bold uppercase tracking-[1px]">Hemos reservado:</p>
               <p className="mt-2 text-[25px] font-bold uppercase leading-[1.05]">{invitation.recipientName}</p>
-              <p className="mt-2 text-[14px] italic">{invitation.tableName ?? 'Mesa por asignar'}</p>
               <p className="mt-3 text-[12px]">
                 {isFamilyInvitation ? `${invitation.maxGuests} espacios para adultos` : '1 espacio para adultos'}
               </p>

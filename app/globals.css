@@ -143,14 +143,6 @@ select {
   );
 }
 
-/* On mobile, use the current dynamic viewport instead of a stale visualViewport
- * measurement. This keeps each story screen aligned with the visible browser area. */
-@media (max-width: 767px) {
-  .invitation-shell {
-    --invitation-viewport-height: 100dvh;
-  }
-}
-
 .invitation-nav-links {
   overflow-x: auto;
   scrollbar-width: none;
@@ -359,7 +351,7 @@ select {
 }
 
 .dress-adults-note {
-  top: min(163.125cqw, 98.04%);
+  top: min(129.1667cqw, 78.62%);
   width: 85.2083%;
   font-size: min(3.5cqw, 16px);
   line-height: normal;
@@ -367,6 +359,7 @@ select {
 
 @media (max-width: 767px) {
   .invitation-shell {
+    --invitation-viewport-height: 100dvh;
     --invitation-screen-bottom-space: clamp(40px, 5svh, 60px);
     --invitation-countdown-bottom-space: clamp(76px, 9svh, 96px);
   }
