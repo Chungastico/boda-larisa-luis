@@ -340,7 +340,6 @@ select {
 
 .dress-script,
 .dress-title,
-.dress-copy,
 .dress-adults-note {
   position: absolute;
   left: 50%;
@@ -357,18 +356,6 @@ select {
   width: 100%;
   font-size: min(4.5833cqw, 22px);
   line-height: normal;
-}
-
-.dress-copy {
-  top: min(129.1667cqw, 78.62%);
-  left: 50.7292%;
-  width: 85.2083%;
-  font-size: min(3.25cqw, 15px);
-  line-height: 1.75;
-}
-
-.dress-copy p {
-  margin: 0;
 }
 
 .dress-adults-note {

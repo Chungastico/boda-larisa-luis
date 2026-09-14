@@ -522,11 +522,7 @@ export function InvitationExperience({
           <img src="/figma/design/dress-card.svg" alt="" className="dress-card absolute inset-x-0 z-20 w-full" />
           <div data-invitation-reveal className="dress-content absolute inset-0 z-30">
             <p className="dress-script font-script section-script-title text-[#8b9574] [text-shadow:0px_4px_10px_rgba(0,0,0,0.25)]">Código de vestimenta</p>
-            <p className="dress-title font-bold uppercase tracking-[0.5px]">Etiqueta semi-formal</p>
-            <div className="dress-copy text-[rgba(42,42,28,0.85)]">
-              <p>Pedimos a nuestros invitados vestir de etiqueta semi-formal.</p>
-              <p>Evitar el <em>blanco, marfil y tonos beige</em>, reservados para los <em>novios</em>.</p>
-            </div>
+            <p className="dress-title font-bold uppercase tracking-[0.5px]">Vestimenta semi-formal</p>
             <p className="dress-adults-note font-bold">En esta ocasión, el evento es solo para adultos.</p>
           </div>
         </section>
