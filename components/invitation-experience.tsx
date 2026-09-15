@@ -367,13 +367,16 @@ export function InvitationExperience({
       }
     }
 
-    const attendees = isFamilyInvitation && invitation.invitees.length
+    const isConfirmingAll = isFamilyInvitation && familyMode === 'all';
+    const attendees = isFamilyInvitation && !isConfirmingAll && invitation.invitees.length
       ? invitation.invitees.map((invitee) => ({
           id: invitee.id,
           isAttending: memberSelection[invitee.id] === true,
         }))
       : undefined;
-    const selectedCount = attendees?.filter((attendee) => attendee.isAttending).length ?? guestCount;
+    const selectedCount = isConfirmingAll
+      ? invitation.maxGuests
+      : attendees?.filter((attendee) => attendee.isAttending).length ?? guestCount;
     const resolvedStatus = isFamilyInvitation
       ? familyMode === 'declined'
         ? 'DECLINED'
@@ -571,7 +574,7 @@ export function InvitationExperience({
                 </p>
                 <p className="mt-3 text-[12px] leading-5">
                   {savedStatus === 'ACCEPTED'
-                    ? `${selectedMemberCount || guestCount} de ${invitation.maxGuests} personas confirmadas.`
+                    ? `${familyMode === 'all' ? invitation.maxGuests : selectedMemberCount || guestCount} de ${invitation.maxGuests} personas confirmadas.`
                     : 'La invitación quedó cancelada.'}
                 </p>
                 <button
