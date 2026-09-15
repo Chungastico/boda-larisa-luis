@@ -305,6 +305,22 @@ export async function getInvitationBySlug(slug: string) {
   return invitations.find((invitation) => invitation.slug === slug) ?? null;
 }
 
+export async function updateInvitationSent(id: string, invitationSent: boolean) {
+  const invitation = (await getAdminInvitations()).find((item) => item.id === id);
+  if (!invitation) return null;
+
+  const sql = getSql();
+  if (!sql) return { ...invitation, invitationSent };
+
+  await sql`
+    UPDATE invitations
+    SET invitation_sent = ${invitationSent}, updated_at = NOW()
+    WHERE id = ${id}
+  `;
+
+  return (await getAdminInvitations()).find((item) => item.id === id) ?? null;
+}
+
 export async function updateInvitationRsvp({
   slug,
   status,

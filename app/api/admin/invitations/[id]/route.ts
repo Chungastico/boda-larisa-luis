@@ -4,6 +4,7 @@ import {
   deleteInvitationFamily,
   RSVP_STATUSES,
   type FamilyInput,
+  updateInvitationSent,
   updateInvitationDetails,
 } from '@/lib/invitations';
 
@@ -58,6 +59,16 @@ export async function PATCH(
 
   if (!body) {
     return NextResponse.json({ error: 'Datos de familia requeridos.' }, { status: 400 });
+  }
+
+  if (Object.keys(body).length === 1 && typeof body.invitationSent === 'boolean') {
+    const invitation = await updateInvitationSent(id, body.invitationSent);
+
+    if (!invitation) {
+      return NextResponse.json({ error: 'Invitación no encontrada.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ invitation });
   }
 
   const family = readFamilyInput(body);

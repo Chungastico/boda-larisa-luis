@@ -91,23 +91,6 @@ function parseMembers(value: string): FamilyMemberInput[] {
     .filter((member) => member.name);
 }
 
-function invitationPayload(invitation: Invitation, overrides: Partial<FamilyInput> = {}): FamilyInput {
-  return {
-    recipientName: invitation.recipientName,
-    householdName: invitation.householdName,
-    maxGuests: invitation.maxGuests,
-    status: invitation.status,
-    attendingCount: invitation.attendingCount,
-    sourceLabel: invitation.sourceLabel,
-    clusterLabel: invitation.clusterLabel,
-    clusterColor: invitation.clusterColor,
-    tableName: invitation.tableName,
-    invitationSent: invitation.invitationSent,
-    members: invitation.invitees.map(({ name, gender }) => ({ name, gender })),
-    ...overrides,
-  };
-}
-
 async function workbookEntries(file: File): Promise<GuestImportEntry[]> {
   const [buffer, XLSXModule] = await Promise.all([file.arrayBuffer(), import('xlsx')]);
   const XLSX = XLSXModule.default ?? XLSXModule;
@@ -518,7 +501,7 @@ export function AdminDashboard({ initialInvitations, isDemo }: { initialInvitati
       const response = await fetch('/api/admin/invitations/' + invitation.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invitationPayload(invitation, { invitationSent: checked })),
+        body: JSON.stringify({ invitationSent: checked }),
       });
       const payload = (await response.json().catch(() => null)) as { invitation?: Invitation; error?: string } | null;
       if (!response.ok || !payload?.invitation) throw new Error(payload?.error ?? 'No se pudo actualizar el envío.');
